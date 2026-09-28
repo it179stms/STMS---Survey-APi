@@ -86,26 +86,52 @@
         <!-- Content Area -->
         <div class="content-area">
             
-            <!-- Menu 1: จัดการ QR -->
+<!-- Menu 1: จัดการ QR -->
             <div id="menu1" class="content-section active">
                 <h2>จัดการ QR แบบประเมิน</h2>
-                <div class="card" style="max-width: 500px;">
-                    <h3>สร้าง QR Code พื้นที่ใหม่</h3>
-                    <select id="projectSelect" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
-                    
-                    <div id="zoneCreator" style="display: none; margin-top: 15px;">
-                        <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
-                        <button class="btn-primary" onclick="generateQR()">+ สร้าง QR Code</button>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <!-- ฝั่งซ้าย: ฟอร์มสร้าง QR -->
+                    <div class="card" style="flex: 1; min-width: 300px;">
+                        <h3>สร้าง QR Code พื้นที่ใหม่</h3>
+                        <select id="projectSelect" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
+                        
+                        <div id="zoneCreator" style="display: none; margin-top: 15px;">
+                            <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
+                            <button class="btn-primary" onclick="generateQR()" style="width: 100%; margin-top: 10px;">+ สร้าง QR Code</button>
+                        </div>
+                        
+                        <div id="qrResult" style="display: none; margin-top: 20px; text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 8px;">
+                            <h4 id="qrTitle" style="margin-top:0;"></h4>
+                            <div id="qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
+                            <input type="text" id="qrLink" readonly style="background:#f4f4f4; text-align:center;">
+                            <button onclick="copyLink()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; margin-top:10px;">คัดลอก Link</button>
+                        </div>
                     </div>
-                    
-                    <div id="qrResult" style="display: none; margin-top: 20px; text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 8px;">
-                        <h4 id="qrTitle"></h4>
-                        <div id="qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
-                        <input type="text" id="qrLink" readonly style="background:#f4f4f4; text-align:center;">
-                        <button onclick="copyLink()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">คัดลอก Link</button>
-                        <p style="font-size: 12px; color: #666; margin-top:10px;">*ฟังก์ชัน ลบ/ปริ้นท์ จะเพิ่มในตารางด้านล่างต่อไป</p>
+
+                    <!-- ฝั่งขวา: ตารางแสดงรายการ -->
+                    <div class="card" style="flex: 2; min-width: 400px; max-height: 70vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>รายการโซนและ QR Code</h3>
+                            <button onclick="fetchZoneList()" style="background:none; border:1px solid #ccc; padding:5px 10px; border-radius:4px; cursor:pointer;">🔄 รีเฟรช</button>
+                        </div>
+                        
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 14px;">
+                            <thead>
+                                <tr style="background: #e9ecef;">
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc;">รหัสโซน</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc;">ชื่อพื้นที่</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc;">สถานะ</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc; text-align: center;">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="zoneTableBody">
+                                <tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            </div>
                 
                 <div class="card">
                     <h3>รายการ QR Code ทั้งหมด (เร็วๆ นี้)</h3>
