@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบประเมินความพึงพอใจ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Niramit:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Niramit', sans-serif; text-align: center; background-color: #f0f4f8; padding: 20px; color: #333; margin: 0; }
+        .survey-box { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); max-width: 450px; margin: 40px auto; display: none; }
+        .error-box { background: #fff; padding: 40px; border-radius: 16px; max-width: 400px; margin: 60px auto; color: #dc3545; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h2 { color: #2c3e50; font-size: 24px; margin-bottom: 5px; }
+        .zone-name { color: #007bff; font-weight: 600; font-size: 18px; margin-bottom: 25px; }
+        .emojis { display: flex; justify-content: space-around; margin-bottom: 30px; background: #f8f9fa; border-radius: 12px; padding: 15px 5px; }
+        .emoji-btn { font-size: 45px; cursor: pointer; opacity: 0.3; transition: all 0.3s ease; border: none; background: none; padding: 0; filter: grayscale(100%); }
+        .emoji-btn:hover { transform: scale(1.15); opacity: 0.7; }
+        .emoji-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
+        textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 25px; resize: none; box-sizing: border-box; font-family: inherit; font-size: 15px; }
+        textarea:focus { outline: none; border-color: #007bff; }
+        .submit-btn { background: #007bff; color: white; border: none; padding: 15px 20px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .submit-btn:hover { background: #0056b3; }
+        .loader { display: none; margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="error-box" id="errorView">
+        <h2 style="color: #dc3545; margin-bottom: 10px;">⚠️ ไม่พบข้อมูลพื้นที่</h2>
+        <p style="color: #666; font-size: 16px;">กรุณาสแกน QR Code จากป้ายประกาศ<br>ณ จุดให้บริการ เพื่อทำแบบประเมินครับ</p>
+    </div>
+
+    <div class="survey-box" id="surveyView">
+        <h2>ความพึงพอใจการดูแลพื้นที่</h2>
+        <div class="zone-name" id="zoneDisplay">กำลังโหลดข้อมูล...</div>
+        <p style="margin-bottom: 15px; font-size: 16px;">กรุณาเลือกระดับความพึงพอใจ</p>
+        <div class="emojis">
+            <button class="emoji-btn" data-value="5">😍</button><button class="emoji-btn" data-value="4">😊</button><button class="emoji-btn" data-value="3">😐</button><button class="emoji-btn" data-value="2">🙁</button><button class="emoji-btn" data-value="1">😫</button>
+        </div>
+        <textarea id="feedback" placeholder="ข้อเสนอแนะเพิ่มเติม (ถ้ามี)"></textarea>
+        <div class="loader" id="loadingSpinner"></div>
+        <button class="submit-btn" id="submitBtn" onclick="submitSurvey()">ส่งแบบประเมิน</button>
+    </div>
+
+    <script>
+        // 👇👇 เปลี่ยนเป็น Web App URL ของคุณ 👇👇
+        const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
+        
+        let selectedRating = 0;
+        let currentZoneId = "";
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentZoneId = urlParams.get('zone');
+            
+            if (currentZoneId) {
+                document.getElementById('surveyView').style.display = 'block';
+                fetchZoneName(currentZoneId);
+            } else {
+                document.getElementById('errorView').style.display = 'block';
+            }
+        };
+
+        async function fetchZoneName(zoneId) {
+            try {
+                const response = await fetch(`${API_URL}?action=getZoneDetail&zone_id=${zoneId}`);
+                const result = await response.json();
+                
+                if (result.status === 'success' && result.data) {
+                    document.getElementById('zoneDisplay').innerText = `📍 โซน: ${result.data.zone_name}`;
+                } else {
+                    document.getElementById('zoneDisplay').innerText = "📍 รหัสพื้นที่ใน QR Code ไม่ถูกต้อง";
+                    document.getElementById('submitBtn').disabled = true;
+                    document.getElementById('submitBtn').style.background = "#ccc";
+                }
+            } catch (error) { document.getElementById('zoneDisplay').innerText = `📍 โซนรหัส: ${zoneId}`; }
+        }
+
+        const emojiBtns = document.querySelectorAll('.emoji-btn');
+        emojiBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                emojiBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedRating = btn.getAttribute('data-value');
+            });
+        });
+
+        async function submitSurvey() {
+            if (selectedRating === 0) return alert("กรุณาเลือกระดับความพึงพอใจก่อนครับ");
+
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            const payload = { action: 'submitSurvey', zone_id: currentZoneId, rating: selectedRating, feedback: document.getElementById('feedback').value };
+
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                document.getElementById('surveyView').innerHTML = `<h2 style="color: #28a745; margin-top:20px;">✅ สำเร็จ!</h2><p>ขอบคุณที่ร่วมประเมิน เพื่อนำไปปรับปรุงบริการครับ</p>`;
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+                document.getElementById('submitBtn').style.display = 'block';
+                document.getElementById('loadingSpinner').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

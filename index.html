@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการพื้นที่ - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Niramit:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Niramit', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; }
+        #loginSection { text-align: center; max-width: 400px; margin: 50px auto; }
+        input[type="text"], input[type="password"], select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-family: inherit; }
+        button:hover { background: #0056b3; }
+        #dashboardSection { display: none; }
+        .welcome-bar { display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .btn-danger { background: #dc3545; width: auto; padding: 8px 15px; }
+        .zone-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; background: #fafafa; margin-bottom: 15px; }
+        .qr-container { display: flex; justify-content: center; margin: 15px 0; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginSection">
+            <h2 style="border:none;">ระบบจัดการพื้นที่</h2>
+            <p style="color: #666; margin-bottom:20px;">*สำหรับผู้ใช้บริการ กรุณาสแกน QR Code หน้างาน</p>
+            <input type="text" id="userId" placeholder="รหัสผู้ใช้งาน (เช่น USR001)">
+            <input type="password" id="password" placeholder="รหัสผ่าน">
+            <button onclick="handleLogin()">เข้าสู่ระบบเจ้าหน้าที่</button>
+            <p id="loginError" style="color: red; display: none;"></p>
+        </div>
+
+        <div id="dashboardSection">
+            <div class="welcome-bar">
+                <div><strong>ยินดีต้อนรับ:</strong> <span id="userNameDisplay"></span> (<span id="userRoleDisplay"></span>)</div>
+                <button class="btn-danger" onclick="logout()">ออกจากระบบ</button>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <h2>1. สร้าง QR Code พื้นที่</h2>
+                    <select id="projectSelect" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
+                    <div id="zoneCreator" style="display: none; margin-top: 15px;">
+                        <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ห้องน้ำชั้น 1)">
+                        <button onclick="generateQR()" style="background: #28a745;">+ สร้าง QR Code</button>
+                    </div>
+                    <div id="qrResult" class="zone-card" style="display: none; margin-top: 15px;">
+                        <h4 id="qrTitle"></h4>
+                        <div id="qrcode" class="qr-container"></div>
+                        <p style="font-size: 12px; color: #666;">*ข้อมูลถูกบันทึกลงระบบแล้ว สามารถพิมพ์ QR ไปใช้งานได้เลย</p>
+                    </div>
+                </div>
+                <div>
+                    <h2>2. รายการรอตรวจสอบ</h2>
+                    <div class="zone-card"><p style="color: #666;">(ระบบแสดงรายการอัปเดตสถานะงาน จะพัฒนาในเฟสต่อไป)</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 👇👇 เปลี่ยนเป็น Web App URL ของคุณ 👇👇
+        const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
+        
+        let currentUser = null;
+
+        async function handleLogin() {
+            const uid = document.getElementById('userId').value;
+            const pwd = document.getElementById('password').value;
+            const errorMsg = document.getElementById('loginError');
+            errorMsg.style.display = 'none';
+            document.querySelector('#loginSection button').innerText = 'กำลังตรวจสอบ...';
+
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', user_id: uid, password: pwd }) });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    currentUser = result.user;
+                    showDashboard();
+                } else {
+                    errorMsg.innerText = result.message;
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์";
+                errorMsg.style.display = 'block';
+            } finally { document.querySelector('#loginSection button').innerText = 'เข้าสู่ระบบเจ้าหน้าที่'; }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'block';
+            document.getElementById('userNameDisplay').innerText = currentUser.name;
+            document.getElementById('userRoleDisplay').innerText = currentUser.role;
+            fetchProjects();
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('userId').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('qrResult').style.display = 'none';
+            document.getElementById('zoneName').value = '';
+        }
+
+        async function fetchProjects() {
+            const response = await fetch(`${API_URL}?action=getProjects`);
+            const result = await response.json();
+            const select = document.getElementById('projectSelect');
+            select.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
+            if (result.status === 'success') {
+                const allowedProjects = currentUser.role === 'admin' ? result.data : result.data.filter(p => currentUser.projects.includes(p.project_id));
+                allowedProjects.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.project_id; option.innerText = p.project_name;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        function loadZones() {
+            const val = document.getElementById('projectSelect').value;
+            document.getElementById('zoneCreator').style.display = val ? 'block' : 'none';
+        }
+
+        async function generateQR() { 
+            const zoneName = document.getElementById('zoneName').value.trim();
+            const projectId = document.getElementById('projectSelect').value;
+            if (!zoneName) return alert("กรุณาระบุชื่อพื้นที่");
+            if (!projectId) return alert("กรุณาเลือกโครงการ");
+
+            const mockZoneId = 'ZN' + Math.floor(Math.random() * 10000); 
+            
+            // ยิงข้อมูลไปบันทึกที่ Google Sheets
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'createZone', zone_id: mockZoneId, project_id: projectId, zone_name: zoneName })
+                });
+                const result = await response.json();
+                if(result.status !== 'success') return alert("เกิดข้อผิดพลาดในการบันทึกโซน");
+            } catch(e) { return alert("ไม่สามารถติดต่อฐานข้อมูลได้"); }
+
+            const baseUrl = window.location.origin; 
+            const surveyUrl = `${baseUrl}/survey?zone=${mockZoneId}`;
+
+            document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${mockZoneId})`;
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = ""; 
+            new QRCode(qrContainer, { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
+            
+            document.getElementById('qrResult').style.display = 'block';
+            document.getElementById('zoneName').value = ''; 
+        }
+    </script>
+</body>
+</html>
