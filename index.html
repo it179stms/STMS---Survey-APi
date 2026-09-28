@@ -128,34 +128,66 @@
             document.getElementById('zoneCreator').style.display = val ? 'block' : 'none';
         }
 
-        async function generateQR() { 
+async function generateQR() { 
             const zoneName = document.getElementById('zoneName').value.trim();
             const projectId = document.getElementById('projectSelect').value;
+            
             if (!zoneName) return alert("กรุณาระบุชื่อพื้นที่");
             if (!projectId) return alert("กรุณาเลือกโครงการ");
 
-            const mockZoneId = 'ZN' + Math.floor(Math.random() * 10000); 
-            
-            // ยิงข้อมูลไปบันทึกที่ Google Sheets
+            // เปลี่ยนปุ่มเป็นสถานะกำลังโหลด
+            const btn = document.querySelector('#zoneCreator button');
+            const originalBtnText = btn.innerText;
+            btn.innerText = "กำลังสร้างและบันทึก...";
+            btn.disabled = true;
+
             try {
+                // ยิงข้อมูลไปให้ Backend สร้าง ID และบันทึก
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'createZone', zone_id: mockZoneId, project_id: projectId, zone_name: zoneName })
+                    body: JSON.stringify({ 
+                        action: 'createZone', 
+                        project_id: projectId,
+                        zone_name: zoneName
+                        // ไม่ต้องส่ง mockZoneId ไปแล้ว ให้ Backend คิดให้
+                    })
                 });
+                
                 const result = await response.json();
-                if(result.status !== 'success') return alert("เกิดข้อผิดพลาดในการบันทึกโซน");
-            } catch(e) { return alert("ไม่สามารถติดต่อฐานข้อมูลได้"); }
+                
+                if(result.status === 'success') {
+                    // รับรหัส Zone ใหม่ที่ Backend สร้างมาให้ (เช่น ZN004)
+                    const generatedZoneId = result.new_zone_id; 
 
-            const baseUrl = window.location.origin; 
-            const surveyUrl = `${baseUrl}/survey?zone=${mockZoneId}`;
+                    // สร้าง URL ชี้ไปที่หน้า survey.html
+                    const baseUrl = window.location.origin; 
+                    const surveyUrl = `${baseUrl}/survey?zone=${generatedZoneId}`;
 
-            document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${mockZoneId})`;
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = ""; 
-            new QRCode(qrContainer, { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
-            
-            document.getElementById('qrResult').style.display = 'block';
-            document.getElementById('zoneName').value = ''; 
+                    document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${generatedZoneId})`;
+                    const qrContainer = document.getElementById('qrcode');
+                    qrContainer.innerHTML = ""; 
+
+                    new QRCode(qrContainer, {
+                        text: surveyUrl,
+                        width: 150,
+                        height: 150,
+                        colorDark : "#000",
+                        colorLight : "#fff"
+                    });
+
+                    document.getElementById('qrResult').style.display = 'block';
+                    document.getElementById('zoneName').value = ''; 
+                } else {
+                    alert("เกิดข้อผิดพลาดในการบันทึกโซน: " + result.message);
+                }
+
+            } catch(e) {
+                alert("ไม่สามารถติดต่อฐานข้อมูลได้");
+            } finally {
+                // คืนค่าปุ่มกลับเป็นปกติ
+                btn.innerText = originalBtnText;
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
