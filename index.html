@@ -7,70 +7,155 @@
     <link href="https://fonts.googleapis.com/css2?family=Niramit:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Niramit', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; }
-        #loginSection { text-align: center; max-width: 400px; margin: 50px auto; }
-        input[type="text"], input[type="password"], select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-family: inherit; }
-        button:hover { background: #0056b3; }
-        #dashboardSection { display: none; }
-        .welcome-bar { display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .btn-danger { background: #dc3545; width: auto; padding: 8px 15px; }
-        .zone-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; background: #fafafa; margin-bottom: 15px; }
-        .qr-container { display: flex; justify-content: center; margin: 15px 0; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+        body { font-family: 'Niramit', sans-serif; background: #f4f7f6; margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Login Section */
+        #loginSection { width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background: #f4f7f6; }
+        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .login-box button { background: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-family: inherit; margin-top: 10px; }
+        
+        /* Main Layout */
+        #mainApp { display: none; width: 100%; height: 100%; display: flex; } /* จะถูกเปลี่ยนเป็น flex เมื่อ login ผ่าน */
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: #2c3e50; color: white; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #34495e; }
+        .menu-list { flex: 1; padding: 10px 0; overflow-y: auto; }
+        .menu-item { padding: 15px 25px; cursor: pointer; transition: background 0.2s; border-left: 4px solid transparent; }
+        .menu-item:hover { background: #34495e; }
+        .menu-item.active { background: #007bff; border-left: 4px solid #66b0ff; font-weight: 600; }
+        .user-info { padding: 20px; border-top: 1px solid #34495e; font-size: 14px; text-align: center; }
+        .btn-logout { background: #dc3545; color: white; border: none; padding: 8px; width: 100%; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        
+        /* Content Area */
+        .content-area { flex: 1; padding: 30px; overflow-y: auto; background: #f4f7f6; }
+        .content-section { display: none; } /* ซ่อนทุกหน้าไว้ก่อน */
+        .content-section.active { display: block; } /* โชว์เฉพาะหน้าที่เลือก */
+        
+        /* Card & Forms */
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+        input[type="text"], select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .btn-primary { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="loginSection">
-            <h2 style="border:none;">ระบบจัดการพื้นที่</h2>
-            <p style="color: #666; margin-bottom:20px;">*สำหรับผู้ใช้บริการ กรุณาสแกน QR Code หน้างาน</p>
-            <input type="text" id="userId" placeholder="รหัสผู้ใช้งาน (เช่น USR001)">
+
+    <!-- 1. หน้า Login -->
+    <div id="loginSection">
+        <div class="login-box">
+            <h2>ระบบจัดการพื้นที่</h2>
+            <p style="color: #666; margin-bottom:20px; font-size:14px;">กรุณาเข้าสู่ระบบ</p>
+            <input type="text" id="userId" placeholder="รหัสผู้ใช้งาน">
             <input type="password" id="password" placeholder="รหัสผ่าน">
-            <button onclick="handleLogin()">เข้าสู่ระบบเจ้าหน้าที่</button>
-            <p id="loginError" style="color: red; display: none;"></p>
+            <button onclick="handleLogin()">เข้าสู่ระบบ</button>
+            <p id="loginError" style="color: red; display: none; font-size:14px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <!-- 2. หน้า Application หลัก (ซ่อนไว้ก่อน) -->
+    <div id="mainApp" style="display: none;">
+        
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>ระบบจัดการพื้นที่</h3>
+            </div>
+            <div class="menu-list">
+                <div class="menu-item active" onclick="switchMenu('menu1')">📱 จัดการ QR แบบประเมิน</div>
+                <div class="menu-item" onclick="switchMenu('menu2')">📊 Dashboard & Report</div>
+                <!-- Menu 3 จะซ่อนด้วย JS ถ้าไม่ใช่ Admin -->
+                <div class="menu-item" id="navMenu3" onclick="switchMenu('menu3')" style="display: none;">⚙️ User & Project Mgt</div>
+                <div class="menu-item" onclick="switchMenu('menu4')">📝 Logs การทำงาน</div>
+            </div>
+            <div class="user-info">
+                <div id="userNameDisplay">Name</div>
+                <div id="userRoleDisplay" style="color:#aaa; font-size:12px;">Role</div>
+                <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+            </div>
         </div>
 
-        <div id="dashboardSection">
-            <div class="welcome-bar">
-                <div><strong>ยินดีต้อนรับ:</strong> <span id="userNameDisplay"></span> (<span id="userRoleDisplay"></span>)</div>
-                <button class="btn-danger" onclick="logout()">ออกจากระบบ</button>
-            </div>
-            <div class="grid-2">
-                <div>
-                    <h2>1. สร้าง QR Code พื้นที่</h2>
+        <!-- Content Area -->
+        <div class="content-area">
+            
+            <!-- Menu 1: จัดการ QR -->
+            <div id="menu1" class="content-section active">
+                <h2>จัดการ QR แบบประเมิน</h2>
+                <div class="card" style="max-width: 500px;">
+                    <h3>สร้าง QR Code พื้นที่ใหม่</h3>
                     <select id="projectSelect" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
+                    
                     <div id="zoneCreator" style="display: none; margin-top: 15px;">
-                        <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ห้องน้ำชั้น 1)">
-                        <button onclick="generateQR()" style="background: #28a745;">+ สร้าง QR Code</button>
+                        <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
+                        <button class="btn-primary" onclick="generateQR()">+ สร้าง QR Code</button>
                     </div>
-                    <div id="qrResult" class="zone-card" style="display: none; margin-top: 15px;">
+                    
+                    <div id="qrResult" style="display: none; margin-top: 20px; text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 8px;">
                         <h4 id="qrTitle"></h4>
-                        <div id="qrcode" class="qr-container"></div>
-                        <p style="font-size: 12px; color: #666;">*ข้อมูลถูกบันทึกลงระบบแล้ว สามารถพิมพ์ QR ไปใช้งานได้เลย</p>
+                        <div id="qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
+                        <input type="text" id="qrLink" readonly style="background:#f4f4f4; text-align:center;">
+                        <button onclick="copyLink()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">คัดลอก Link</button>
+                        <p style="font-size: 12px; color: #666; margin-top:10px;">*ฟังก์ชัน ลบ/ปริ้นท์ จะเพิ่มในตารางด้านล่างต่อไป</p>
                     </div>
                 </div>
-                <div>
-                    <h2>2. รายการรอตรวจสอบ</h2>
-                    <div class="zone-card"><p style="color: #666;">(ระบบแสดงรายการอัปเดตสถานะงาน จะพัฒนาในเฟสต่อไป)</p></div>
+                
+                <div class="card">
+                    <h3>รายการ QR Code ทั้งหมด (เร็วๆ นี้)</h3>
+                    <p style="color:#666;">ตารางแสดงรายการโซนที่สร้างแล้ว พร้อมปุ่ม ลบ / ปริ้นท์ จะแสดงที่นี่</p>
                 </div>
             </div>
+
+            <!-- Menu 2: Dashboard -->
+            <div id="menu2" class="content-section">
+                <h2>Dashboard ภาพรวม</h2>
+                <div class="card">
+                    <p style="color:#666;">ข้อมูลเชิงลึก, กราฟ, การแยกตามโครงการและโซน จะแสดงที่นี่</p>
+                </div>
+            </div>
+
+            <!-- Menu 3: User & Project Management -->
+            <div id="menu3" class="content-section">
+                <h2>User & Project Management</h2>
+                <div class="card">
+                    <p style="color:#666;">ฟอร์มเพิ่มโครงการใหม่ และจัดการผู้ใช้งาน (เฉพาะ Admin) จะแสดงที่นี่</p>
+                </div>
+            </div>
+
+            <!-- Menu 4: Logs -->
+            <div id="menu4" class="content-section">
+                <h2>Logs การทำงาน</h2>
+                <div class="card">
+                    <p style="color:#666;">ตารางแสดงประวัติการสร้าง/ลบ QR และอัปเดตสถานะงาน ตามโครงการที่รับผิดชอบ</p>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // 👇👇 เปลี่ยนเป็น Web App URL ของคุณ 👇👇
+        // ⚠️ เปลี่ยน URL ของคุณ
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
-        
         let currentUser = null;
 
+        // --- ระบบสลับเมนู (SPA Routing) ---
+        function switchMenu(targetMenuId) {
+            // ซ่อนทุกหน้า
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            // เอาแถบสีฟ้าออกจากทุกเมนู
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            
+            // โชว์หน้าที่เลือก และใส่แถบสีฟ้า
+            document.getElementById(targetMenuId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // --- ระบบ Login & Setup ---
         async function handleLogin() {
             const uid = document.getElementById('userId').value;
             const pwd = document.getElementById('password').value;
             const errorMsg = document.getElementById('loginError');
+            
             errorMsg.style.display = 'none';
             document.querySelector('#loginSection button').innerText = 'กำลังตรวจสอบ...';
 
@@ -79,35 +164,41 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     currentUser = result.user;
-                    showDashboard();
+                    setupApp();
                 } else {
                     errorMsg.innerText = result.message;
                     errorMsg.style.display = 'block';
                 }
             } catch (err) {
-                errorMsg.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์";
+                errorMsg.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ";
                 errorMsg.style.display = 'block';
-            } finally { document.querySelector('#loginSection button').innerText = 'เข้าสู่ระบบเจ้าหน้าที่'; }
+            } finally { document.querySelector('#loginSection button').innerText = 'เข้าสู่ระบบ'; }
         }
 
-        function showDashboard() {
+        function setupApp() {
             document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('dashboardSection').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'flex'; // โชว์ layout หลัก
+            
             document.getElementById('userNameDisplay').innerText = currentUser.name;
-            document.getElementById('userRoleDisplay').innerText = currentUser.role;
+            document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
+
+            // หากเป็น admin ให้โชว์ Menu 3
+            if(currentUser.role === 'admin') {
+                document.getElementById('navMenu3').style.display = 'block';
+            }
+
             fetchProjects();
         }
 
         function logout() {
             currentUser = null;
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('loginSection').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
             document.getElementById('userId').value = '';
             document.getElementById('password').value = '';
-            document.getElementById('qrResult').style.display = 'none';
-            document.getElementById('zoneName').value = '';
         }
 
+        // --- ฟังก์ชันสำหรับ Menu 1 (ดึงมาจากของเดิม) ---
         async function fetchProjects() {
             const response = await fetch(`${API_URL}?action=getProjects`);
             const result = await response.json();
@@ -128,66 +219,48 @@
             document.getElementById('zoneCreator').style.display = val ? 'block' : 'none';
         }
 
-async function generateQR() { 
+        async function generateQR() { 
             const zoneName = document.getElementById('zoneName').value.trim();
             const projectId = document.getElementById('projectSelect').value;
-            
             if (!zoneName) return alert("กรุณาระบุชื่อพื้นที่");
-            if (!projectId) return alert("กรุณาเลือกโครงการ");
-
-            // เปลี่ยนปุ่มเป็นสถานะกำลังโหลด
+            
             const btn = document.querySelector('#zoneCreator button');
-            const originalBtnText = btn.innerText;
-            btn.innerText = "กำลังสร้างและบันทึก...";
-            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "กำลังสร้าง..."; btn.disabled = true;
 
             try {
-                // ยิงข้อมูลไปให้ Backend สร้าง ID และบันทึก
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ 
-                        action: 'createZone', 
-                        project_id: projectId,
-                        zone_name: zoneName
-                        // ไม่ต้องส่ง mockZoneId ไปแล้ว ให้ Backend คิดให้
-                    })
+                    body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName })
                 });
-                
                 const result = await response.json();
                 
                 if(result.status === 'success') {
-                    // รับรหัส Zone ใหม่ที่ Backend สร้างมาให้ (เช่น ZN004)
                     const generatedZoneId = result.new_zone_id; 
-
-                    // สร้าง URL ชี้ไปที่หน้า survey.html
                     const baseUrl = window.location.origin; 
                     const surveyUrl = `${baseUrl}/survey?zone=${generatedZoneId}`;
 
                     document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${generatedZoneId})`;
+                    
+                    // แสดง URL ในช่อง input ให้กด copy ได้
+                    document.getElementById('qrLink').value = surveyUrl;
+
                     const qrContainer = document.getElementById('qrcode');
                     qrContainer.innerHTML = ""; 
-
-                    new QRCode(qrContainer, {
-                        text: surveyUrl,
-                        width: 150,
-                        height: 150,
-                        colorDark : "#000",
-                        colorLight : "#fff"
-                    });
+                    new QRCode(qrContainer, { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
 
                     document.getElementById('qrResult').style.display = 'block';
                     document.getElementById('zoneName').value = ''; 
-                } else {
-                    alert("เกิดข้อผิดพลาดในการบันทึกโซน: " + result.message);
-                }
+                } else { alert("Error: " + result.message); }
+            } catch(e) { alert("ไม่สามารถติดต่อฐานข้อมูลได้"); }
+            finally { btn.innerText = originalText; btn.disabled = false; }
+        }
 
-            } catch(e) {
-                alert("ไม่สามารถติดต่อฐานข้อมูลได้");
-            } finally {
-                // คืนค่าปุ่มกลับเป็นปกติ
-                btn.innerText = originalBtnText;
-                btn.disabled = false;
-            }
+        function copyLink() {
+            const linkInput = document.getElementById('qrLink');
+            linkInput.select();
+            document.execCommand('copy');
+            alert("คัดลอก Link เรียบร้อยแล้ว");
         }
     </script>
 </body>
