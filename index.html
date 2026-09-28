@@ -10,7 +10,6 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /*body { font-family: 'Niramit', sans-serif; background: #f4f7f6; margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }*/
         body { 
             font-family: 'LINE Seed Sans TH', 'Roboto', sans-serif; 
             background: #f4f7f6; margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; 
@@ -23,7 +22,7 @@
         .login-box button { background: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-family: inherit; margin-top: 10px; }
         
         /* Main Layout */
-        #mainApp { display: none; width: 100%; height: 100%; display: flex; } /* จะถูกเปลี่ยนเป็น flex เมื่อ login ผ่าน */
+        #mainApp { display: none; width: 100%; height: 100%; display: flex; } 
         
         /* Sidebar */
         .sidebar { width: 260px; background: #2c3e50; color: white; display: flex; flex-direction: column; }
@@ -37,8 +36,8 @@
         
         /* Content Area */
         .content-area { flex: 1; padding: 30px; overflow-y: auto; background: #f4f7f6; }
-        .content-section { display: none; } /* ซ่อนทุกหน้าไว้ก่อน */
-        .content-section.active { display: block; } /* โชว์เฉพาะหน้าที่เลือก */
+        .content-section { display: none; } 
+        .content-section.active { display: block; } 
         
         /* Card & Forms */
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; }
@@ -61,7 +60,7 @@
         </div>
     </div>
 
-    <!-- 2. หน้า Application หลัก (ซ่อนไว้ก่อน) -->
+    <!-- 2. หน้า Application หลัก -->
     <div id="mainApp" style="display: none;">
         
         <!-- Sidebar -->
@@ -72,7 +71,6 @@
             <div class="menu-list">
                 <div class="menu-item active" onclick="switchMenu('menu1')">📱 จัดการ QR แบบประเมิน</div>
                 <div class="menu-item" onclick="switchMenu('menu2')">📊 Dashboard & Report</div>
-                <!-- Menu 3 จะซ่อนด้วย JS ถ้าไม่ใช่ Admin -->
                 <div class="menu-item" id="navMenu3" onclick="switchMenu('menu3')" style="display: none;">⚙️ User & Project Mgt</div>
                 <div class="menu-item" onclick="switchMenu('menu4')">📝 Logs การทำงาน</div>
             </div>
@@ -86,7 +84,7 @@
         <!-- Content Area -->
         <div class="content-area">
             
-<!-- Menu 1: จัดการ QR -->
+            <!-- Menu 1: จัดการ QR -->
             <div id="menu1" class="content-section active">
                 <h2>จัดการ QR แบบประเมิน</h2>
                 
@@ -132,12 +130,6 @@
                     </div>
                 </div>
             </div>
-                
-                <div class="card">
-                    <h3>รายการ QR Code ทั้งหมด (เร็วๆ นี้)</h3>
-                    <p style="color:#666;">ตารางแสดงรายการโซนที่สร้างแล้ว พร้อมปุ่ม ลบ / ปริ้นท์ จะแสดงที่นี่</p>
-                </div>
-            </div>
 
             <!-- Menu 2: Dashboard -->
             <div id="menu2" class="content-section">
@@ -167,20 +159,20 @@
     </div>
 
     <script>
-        // ⚠️ เปลี่ยน URL ของคุณ
+        // ⚠️ Web App URL ของคุณ
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
         // --- ระบบสลับเมนู (SPA Routing) ---
         function switchMenu(targetMenuId) {
-            // ซ่อนทุกหน้า
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            // เอาแถบสีฟ้าออกจากทุกเมนู
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             
-            // โชว์หน้าที่เลือก และใส่แถบสีฟ้า
             document.getElementById(targetMenuId).classList.add('active');
             event.target.classList.add('active');
+            
+            // ถ้าย้ายมา Menu 1 ให้โหลดตารางใหม่
+            if (targetMenuId === 'menu1') fetchZoneList();
         }
 
         // --- ระบบ Login & Setup ---
@@ -210,12 +202,11 @@
 
         function setupApp() {
             document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'flex'; // โชว์ layout หลัก
+            document.getElementById('mainApp').style.display = 'flex'; 
             
             document.getElementById('userNameDisplay').innerText = currentUser.name;
             document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
 
-            // หากเป็น admin ให้โชว์ Menu 3
             if(currentUser.role === 'admin') {
                 document.getElementById('navMenu3').style.display = 'block';
             }
@@ -231,7 +222,7 @@
             document.getElementById('password').value = '';
         }
 
-        // --- ฟังก์ชันสำหรับ Menu 1 (ดึงมาจากของเดิม) ---
+        // --- ฟังก์ชันสำหรับ Menu 1 ---
         async function fetchProjects() {
             const response = await fetch(`${API_URL}?action=getProjects`);
             const result = await response.json();
@@ -245,11 +236,13 @@
                     select.appendChild(option);
                 });
             }
+            fetchZoneList(); // โหลดตารางทันทีหลังโหลดโปรเจกต์เสร็จ
         }
 
         function loadZones() {
             const val = document.getElementById('projectSelect').value;
             document.getElementById('zoneCreator').style.display = val ? 'block' : 'none';
+            fetchZoneList(); // โหลดตารางใหม่เมื่อเปลี่ยนโปรเจกต์
         }
 
         async function generateQR() { 
@@ -274,8 +267,6 @@
                     const surveyUrl = `${baseUrl}/survey?zone=${generatedZoneId}`;
 
                     document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${generatedZoneId})`;
-                    
-                    // แสดง URL ในช่อง input ให้กด copy ได้
                     document.getElementById('qrLink').value = surveyUrl;
 
                     const qrContainer = document.getElementById('qrcode');
@@ -284,6 +275,8 @@
 
                     document.getElementById('qrResult').style.display = 'block';
                     document.getElementById('zoneName').value = ''; 
+                    
+                    fetchZoneList(); // รีเฟรชตารางเพื่อโชว์โซนที่เพิ่งสร้าง
                 } else { alert("Error: " + result.message); }
             } catch(e) { alert("ไม่สามารถติดต่อฐานข้อมูลได้"); }
             finally { btn.innerText = originalText; btn.disabled = false; }
@@ -294,6 +287,88 @@
             linkInput.select();
             document.execCommand('copy');
             alert("คัดลอก Link เรียบร้อยแล้ว");
+        }
+
+        // --- ฟังก์ชันตารางและพิมพ์ QR Code ---
+        async function fetchZoneList() {
+            const tableBody = document.getElementById('zoneTableBody');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
+            
+            const selectedProject = document.getElementById('projectSelect').value;
+            let url = `${API_URL}?action=getZones`;
+            if (selectedProject) url += `&project_id=${selectedProject}`;
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                tableBody.innerHTML = ''; 
+
+                if (result.status === 'success' && result.data.length > 0) {
+                    let allowedZones = result.data;
+                    if (currentUser.role !== 'admin') {
+                        allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
+                    }
+
+                    if (allowedZones.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลโซน</td></tr>';
+                        return;
+                    }
+
+                    allowedZones.forEach(zone => {
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = "1px solid #eee";
+                        const surveyUrl = `${window.location.origin}/survey?zone=${zone.zone_id}`;
+                        
+                        tr.innerHTML = `
+                            <td style="padding: 10px;">${zone.zone_id}</td>
+                            <td style="padding: 10px;">${zone.zone_name}</td>
+                            <td style="padding: 10px;">
+                                <span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">
+                                    ${zone.is_active ? 'ใช้งาน' : 'ระงับ'}
+                                </span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button>
+                                <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีข้อมูล</td></tr>';
+                }
+            } catch (error) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">ดึงข้อมูลล้มเหลว</td></tr>';
+            }
+        }
+
+        function printQR(zoneId, zoneName, url) {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html><head>
+                    <title>Print QR - ${zoneName}</title>
+                    <style>
+                        body { font-family: sans-serif; text-align: center; padding: 50px; }
+                        #qr-container { display: flex; justify-content: center; margin-top:20px; }
+                    </style>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                </head><body>
+                    <h2>สแกนเพื่อประเมินความพึงพอใจ</h2>
+                    <h3>จุดบริการ: ${zoneName} (${zoneId})</h3>
+                    <div id="qr-container"></div>
+                    <script>
+                        new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 });
+                        setTimeout(() => { window.print(); }, 500);
+                    </script>
+                </body></html>
+            `);
+            printWindow.document.close();
+        }
+
+        function deleteZone(zoneId) {
+            if(confirm(`คุณต้องการลบโซน ${zoneId} ใช่หรือไม่?`)) {
+                alert('ระบบลบข้อมูลจะพัฒนาในเฟส API ถัดไปครับ');
+            }
         }
     </script>
 </body>
