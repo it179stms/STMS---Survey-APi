@@ -576,6 +576,65 @@ function printQR(zoneId, zoneName, url) {
                 alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
             }
         }
+
+        // --- ฟังก์ชันสำหรับ Menu 3 (User & Project Management) ---
+        function updateAssignProjectDropdown() {
+            const selectAssign = document.getElementById('assignProjId');
+            selectAssign.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
+            const allProjects = Array.from(document.getElementById('projectSelect').options).slice(1);
+            allProjects.forEach(opt => {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectAssign.appendChild(newOpt);
+            });
+        }
+
+        async function createProject() {
+            const pid = document.getElementById('newProjId').value.trim();
+            const pname = document.getElementById('newProjName').value.trim();
+            if (!pid || !pname) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_id: pid, project_name: pname }) });
+                const result = await res.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    document.getElementById('newProjId').value = ''; document.getElementById('newProjName').value = '';
+                    fetchProjects(); // รีเฟรชรายชื่อโปรเจกต์
+                }
+            } catch (e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+        }
+
+        async function createUser() {
+            const uid = document.getElementById('newUserId').value.trim();
+            const name = document.getElementById('newUserName').value.trim();
+            const pwd = document.getElementById('newUserPwd').value.trim();
+            const role = document.getElementById('newUserRole').value;
+            if (!uid || !name || !pwd) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role }) });
+                const result = await res.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    document.getElementById('newUserId').value = ''; document.getElementById('newUserName').value = ''; document.getElementById('newUserPwd').value = '';
+                }
+            } catch (e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+        }
+
+        async function assignProject() {
+            const uid = document.getElementById('assignUserId').value.trim();
+            const pid = document.getElementById('assignProjId').value;
+            if (!uid || !pid) return alert('กรุณาระบุผู้ใช้งานและโครงการที่ต้องการ');
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'assignProject', assign_user: uid, assign_project: pid }) });
+                const result = await res.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    document.getElementById('assignUserId').value = ''; document.getElementById('assignProjId').value = '';
+                }
+            } catch (e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+        }
     </script>
 </body>
 </html>
