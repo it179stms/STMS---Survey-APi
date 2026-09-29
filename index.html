@@ -192,11 +192,37 @@
                 </div>
             </div>
 
-            <!-- Menu 3: User & Project Management -->
+<!-- Menu 3: User & Project Management -->
             <div id="menu3" class="content-section">
-                <h2>User & Project Management</h2>
-                <div class="card">
-                    <p style="color:#666;">ฟอร์มเพิ่มโครงการใหม่ และจัดการผู้ใช้งาน (เฉพาะ Admin) จะแสดงที่นี่</p>
+                <h2>User & Project Management (เฉพาะแอดมิน)</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- สร้างโครงการ -->
+                    <div class="card">
+                        <h3 style="margin-top:0; color:#007bff;">🏢 เพิ่มโครงการใหม่</h3>
+                        <input type="text" id="newProjId" placeholder="รหัสโครงการ (เช่น PRJ003)">
+                        <input type="text" id="newProjName" placeholder="ชื่อโครงการ">
+                        <button class="btn-primary" onclick="createProject()" style="width:100%; margin-top:10px;">บันทึกโครงการ</button>
+                    </div>
+                    <!-- สร้างผู้ใช้งาน -->
+                    <div class="card">
+                        <h3 style="margin-top:0; color:#28a745;">👤 สร้างผู้ใช้งานใหม่</h3>
+                        <input type="text" id="newUserId" placeholder="รหัสผู้ใช้งาน (Username)">
+                        <input type="text" id="newUserName" placeholder="ชื่อ - นามสกุล">
+                        <input type="password" id="newUserPwd" placeholder="รหัสผ่าน (Password)">
+                        <select id="newUserRole">
+                            <option value="staff">เจ้าหน้าที่ทั่วไป (Staff)</option>
+                            <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                        </select>
+                        <button class="btn-primary" onclick="createUser()" style="background:#28a745; width:100%; margin-top:10px;">สร้างบัญชีผู้ใช้</button>
+                    </div>
+                    <!-- กำหนดสิทธิ์ -->
+                    <div class="card">
+                        <h3 style="margin-top:0; color:#6f42c1;">🔗 กำหนดสิทธิ์โครงการ</h3>
+                        <p style="font-size:12px; color:#666; margin-top:0;">มอบหมายโครงการให้เจ้าหน้าที่</p>
+                        <input type="text" id="assignUserId" placeholder="รหัสผู้ใช้งาน (เช่น USR002)">
+                        <select id="assignProjId"><option value="">-- เลือกโครงการ --</option></select>
+                        <button class="btn-primary" onclick="assignProject()" style="background:#6f42c1; width:100%; margin-top:10px;">เพิ่มสิทธิ์เข้าถึง</button>
+                    </div>
                 </div>
             </div>
 
@@ -227,6 +253,7 @@
             // ถ้าย้ายมา Menu 1 ให้โหลดตารางใหม่
             if (targetMenuId === 'menu1') fetchZoneList();
             if (targetMenuId === 'menu2') fetchSurveyData();
+            if (targetMenuId === 'menu3') updateAssignProjectDropdown();
         }
 
         // --- ระบบ Login & Setup ---
