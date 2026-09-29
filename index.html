@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Niramit:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/LineSeedSansTH/LineSeedSansTH.css" rel="stylesheet" />
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'LINE Seed Sans TH', 'Roboto', sans-serif; background: #f4f7f6; margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
@@ -15,6 +14,7 @@
         .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
         .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .login-box button { background: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-family: inherit; margin-top: 10px; }
+        .login-box button:disabled { background: #999; cursor: not-allowed; }
         #mainApp { display: none; width: 100%; height: 100%; display: flex; } 
         .sidebar { width: 260px; background: #2c3e50; color: white; display: flex; flex-direction: column; }
         .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #34495e; }
@@ -30,7 +30,8 @@
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; }
         h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
         input[type="text"], input[type="password"], select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .btn-primary { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn-primary { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: inherit;}
+        .btn-primary:disabled { background: #999; cursor: not-allowed; }
         .tab-header { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
         .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 16px; color: #666; font-family: inherit; font-weight: bold; }
         .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; margin-bottom: -2px; }
@@ -47,11 +48,10 @@
 <body>
     <div id="loginSection">
         <div class="login-box">
-            <h2>ระบบจัดการพื้นที่</h2>
-            <p style="color: #666; margin-bottom:20px; font-size:14px;">กรุณาเข้าสู่ระบบ</p>
+            <h2>ระบบจัดการพื้นที่</h2><p style="color: #666; margin-bottom:20px; font-size:14px;">กรุณาเข้าสู่ระบบ</p>
             <input type="text" id="userId" placeholder="รหัสผู้ใช้งาน">
             <input type="password" id="password" placeholder="รหัสผ่าน">
-            <button onclick="handleLogin()">เข้าสู่ระบบ</button>
+            <button id="btnLogin" onclick="handleLogin()">เข้าสู่ระบบ</button>
             <p id="loginError" style="color: red; display: none; font-size:14px; margin-top:10px;"></p>
         </div>
     </div>
@@ -81,24 +81,20 @@
                         <select id="projectSelect" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
                         <div id="zoneCreator" style="display: none; margin-top: 15px;">
                             <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
-                            <button class="btn-primary" onclick="generateQR()" style="width: 100%; margin-top: 10px;">+ สร้าง QR Code</button>
+                            <button id="btnCreateQR" class="btn-primary" onclick="generateQR()" style="width: 100%; margin-top: 10px;">+ สร้าง QR Code</button>
                         </div>
                         <div id="qrResult" style="display: none; margin-top: 20px; text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 8px;">
-                            <h4 id="qrTitle" style="margin-top:0;"></h4>
-                            <div id="qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
+                            <h4 id="qrTitle" style="margin-top:0;"></h4><div id="qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
                             <input type="text" id="qrLink" readonly style="background:#f4f4f4; text-align:center;">
                             <button onclick="copyLink()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; margin-top:10px;">คัดลอก Link</button>
                         </div>
                     </div>
                     <div class="card" style="flex: 2; min-width: 400px; max-height: 70vh; overflow-y: auto;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3>รายการโซนและ QR Code</h3>
-                            <button onclick="fetchZoneList()" style="background:none; border:1px solid #ccc; padding:5px 10px; border-radius:4px; cursor:pointer;">🔄 รีเฟรช</button>
+                            <h3>รายการโซนและ QR Code</h3><button onclick="fetchZoneList()" style="background:none; border:1px solid #ccc; padding:5px 10px; border-radius:4px; cursor:pointer;">🔄 รีเฟรช</button>
                         </div>
                         <table style="width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;">
-                                <tr><th style="padding: 10px;">รหัสโซน</th><th style="padding: 10px;">ชื่อพื้นที่</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr>
-                            </thead>
+                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">รหัสโซน</th><th style="padding: 10px;">ชื่อพื้นที่</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
                             <tbody id="zoneTableBody"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
                         </table>
                     </div>
@@ -123,19 +119,13 @@
                     <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
                         <strong style="min-width: 60px;">ตัวกรอง:</strong>
                         <select id="filterProject" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกโครงการ --</option></select>
-                        <select id="filterRating" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;">
-                            <option value="all">-- ทุกระดับคะแนน --</option><option value="5">5 ดาว (ดีมาก)</option><option value="4">4 ดาว (ดี)</option><option value="3">3 ดาว (ปานกลาง)</option><option value="2">2 ดาว (พอใช้)</option><option value="1">1 ดาว (ปรับปรุง)</option>
-                        </select>
-                        <select id="filterStatus" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;">
-                            <option value="all">-- ทุกสถานะ --</option><option value="pending">รอดำเนินการ</option><option value="resolved">แก้ไขแล้ว</option>
-                        </select>
+                        <select id="filterRating" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกระดับคะแนน --</option><option value="5">5 ดาว (ดีมาก)</option><option value="4">4 ดาว (ดี)</option><option value="3">3 ดาว (ปานกลาง)</option><option value="2">2 ดาว (พอใช้)</option><option value="1">1 ดาว (ปรับปรุง)</option></select>
+                        <select id="filterStatus" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกสถานะ --</option><option value="pending">รอดำเนินการ</option><option value="resolved">แก้ไขแล้ว</option></select>
                         <button onclick="fetchSurveyData()" style="background:#6c757d; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรช</button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;">
-                                <tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">พื้นที่ (โซน)</th><th style="padding: 10px; text-align: center;">คะแนน</th><th style="padding: 10px;">ข้อเสนอแนะ</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr>
-                            </thead>
+                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">พื้นที่ (โซน)</th><th style="padding: 10px; text-align: center;">คะแนน</th><th style="padding: 10px;">ข้อเสนอแนะ</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
                             <tbody id="surveyTableBody"><tr><td colspan="6" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
                         </table>
                     </div>
@@ -144,37 +134,29 @@
 
             <!-- Menu 3 -->
             <div id="menu3" class="content-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2>User & Project Management (เฉพาะแอดมิน)</h2>
-                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><h2>User & Project Management (เฉพาะแอดมิน)</h2></div>
                 <div class="tab-header">
                     <button class="tab-btn active" onclick="switchAdminTab('tab-users')">👥 จัดการผู้ใช้งาน (Users)</button>
                     <button class="tab-btn" onclick="switchAdminTab('tab-projects')">🏢 จัดการโครงการ (Projects)</button>
                 </div>
                 <div id="tab-users" class="tab-content active card">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
-                        <h3 style="margin:0;">รายชื่อผู้ใช้งานทั้งหมด</h3>
-                        <button onclick="openUserModal()" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มผู้ใช้งานใหม่</button>
+                        <h3 style="margin:0;">รายชื่อผู้ใช้งานทั้งหมด</h3><button onclick="openUserModal()" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มผู้ใช้งานใหม่</button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;">
-                                <tr><th style="padding: 10px;">User ID</th><th style="padding: 10px;">ชื่อพนักงาน</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr>
-                            </thead>
+                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">User ID</th><th style="padding: 10px;">ชื่อพนักงาน</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr></thead>
                             <tbody id="adminUserTable"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
                 <div id="tab-projects" class="tab-content card">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
-                        <h3 style="margin:0;">รายชื่อโครงการทั้งหมด</h3>
-                        <button onclick="openProjectModal()" style="background:#007bff; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มโครงการใหม่</button>
+                        <h3 style="margin:0;">รายชื่อโครงการทั้งหมด</h3><button onclick="openProjectModal()" style="background:#007bff; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มโครงการใหม่</button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;">
-                                <tr><th style="padding: 10px;">รหัส</th><th style="padding: 10px;">ชื่อโครงการ</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr>
-                            </thead>
+                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">รหัส</th><th style="padding: 10px;">ชื่อโครงการ</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr></thead>
                             <tbody id="adminProjectTable"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr></tbody>
                         </table>
                     </div>
@@ -184,20 +166,11 @@
             <!-- Menu 4 -->
             <div id="menu4" class="content-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2>Logs ประวัติการทำงาน</h2>
-                    <button onclick="fetchLogs()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรชข้อมูล</button>
+                    <h2>Logs ประวัติการทำงาน</h2><button id="btnRefreshLogs" onclick="fetchLogs()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรชข้อมูล</button>
                 </div>
                 <div class="card" style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                        <thead style="background: #e9ecef;">
-                            <tr>
-                                <th style="padding: 10px;">วัน-เวลา</th>
-                                <th style="padding: 10px;">รหัสพนักงาน</th>
-                                <th style="padding: 10px;">โครงการ</th>
-                                <th style="padding: 10px;">การกระทำ (Action)</th>
-                                <th style="padding: 10px;">รายละเอียด</th>
-                            </tr>
-                        </thead>
+                        <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">รหัสพนักงาน</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">การกระทำ (Action)</th><th style="padding: 10px;">รายละเอียด</th></tr></thead>
                         <tbody id="logsTableBody"><tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
                     </table>
                 </div>
@@ -212,7 +185,7 @@
             <h3 id="modalProjectTitle" style="margin-top:0; color:#007bff;">🏢 เพิ่มโครงการใหม่</h3>
             <p style="font-size:12px; color:#666; margin-top:0;">ระบบจะสร้างรหัสโครงการให้อัตโนมัติ</p>
             <input type="text" id="modalProjName" placeholder="ชื่อโครงการ">
-            <button class="btn-primary" onclick="submitProjectModal()" style="width:100%; margin-top:10px;">บันทึกโครงการ</button>
+            <button id="btnSaveProject" class="btn-primary" onclick="submitProjectModal()" style="width:100%; margin-top:10px;">บันทึกโครงการ</button>
         </div>
     </div>
 
@@ -223,7 +196,7 @@
             <h3 id="modalUserTitle" style="margin-top:0; color:#28a745;">👤 เพิ่มผู้ใช้งานใหม่</h3>
             <input type="text" id="modalUserId" placeholder="รหัสผู้ใช้งาน (Username)">
             <input type="text" id="modalUserName" placeholder="ชื่อ - นามสกุล">
-            <input type="password" id="modalUserPwd" placeholder="รหัสผ่าน (เว้นว่างได้ถ้าไม่ต้องการเปลี่ยน)">
+            <input type="password" id="modalUserPwd" placeholder="รหัสผ่าน">
             
             <select id="modalUserRole" onchange="toggleProjectSelection()">
                 <option value="staff">เจ้าหน้าที่ทั่วไป (Staff)</option>
@@ -231,168 +204,102 @@
             </select>
             
             <div id="projectAssignmentSection" style="margin-top: 15px;">
-                <strong>🔗 กำหนดสิทธิ์โครงการ</strong>
-                <div id="modalProjectCheckboxes" class="checkbox-group"></div>
+                <strong>🔗 กำหนดสิทธิ์โครงการ</strong><div id="modalProjectCheckboxes" class="checkbox-group"></div>
             </div>
-            <button class="btn-primary" onclick="submitUserModal()" style="background:#28a745; width:100%; margin-top:15px;">บันทึกข้อมูลผู้ใช้</button>
+            <button id="btnSaveUser" class="btn-primary" onclick="submitUserModal()" style="background:#28a745; width:100%; margin-top:15px;">บันทึกข้อมูลผู้ใช้</button>
         </div>
     </div>
 
-<script>
+    <script>
         // ⚠️ Web App URL ของคุณ
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
-        // 🚀 พระเอกของเรา: ฟังก์ชันอัจฉริยะที่แอบ "พยายามดึงข้อมูลใหม่ (Auto-Retry)" หาก Google ล่ม
         async function safeFetch(url, options = {}) {
-            let retries = 3; // ลองซ้ำสูงสุด 3 ครั้ง
-            let delay = 1000; // รอ 1 วินาที
+            let retries = 3; let delay = 1000;
             for (let i = 0; i < retries; i++) {
                 try {
                     const response = await fetch(url, options);
                     if (!response.ok) throw new Error("Google HTTP Error");
-                    const text = await response.text();
-                    return JSON.parse(text); // ถ้าสำเร็จ คืนค่าเป็น JSON กลับไปเลย
+                    return JSON.parse(await response.text());
                 } catch (error) {
-                    if (i === retries - 1) throw new Error("เซิร์ฟเวอร์ของ Google ไม่ตอบสนอง (ลองซ้ำ 3 ครั้งแล้ว)");
-                    console.warn(`การเชื่อมต่อขัดข้อง กำลังลองใหม่ครั้งที่ ${i + 1}...`);
+                    if (i === retries - 1) throw new Error("เซิร์ฟเวอร์ของ Google ไม่ตอบสนอง");
                     await new Promise(resolve => setTimeout(resolve, delay));
-                    delay += 1000; // รอบต่อไปให้รอนานขึ้นเป็น 2 วิ, 3 วิ...
+                    delay += 1000;
                 }
             }
         }
 
-        // --- ระบบสลับเมนู ---
         function switchMenu(targetMenuId) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            document.getElementById(targetMenuId).classList.add('active');
-            event.target.classList.add('active');
-            
+            document.getElementById(targetMenuId).classList.add('active'); event.target.classList.add('active');
             if (targetMenuId === 'menu1') fetchZoneList();
             if (targetMenuId === 'menu2') fetchSurveyData();
             if (targetMenuId === 'menu3') loadAdminTables();  
             if (targetMenuId === 'menu4') fetchLogs();
         }
 
-        // --- ระบบ Login ---
         async function handleLogin() {
-            const uid = document.getElementById('userId').value;
-            const pwd = document.getElementById('password').value;
-            const errorMsg = document.getElementById('loginError');
-            errorMsg.style.display = 'none';
-            document.querySelector('#loginSection button').innerText = 'กำลังตรวจสอบ...';
-
+            const uid = document.getElementById('userId').value; const pwd = document.getElementById('password').value;
+            const errorMsg = document.getElementById('loginError'); const btn = document.getElementById('btnLogin');
+            errorMsg.style.display = 'none'; btn.innerText = 'กำลังตรวจสอบ...'; btn.disabled = true;
             try {
-                // ใช้ safeFetch แทน fetch ปกติ
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', user_id: uid, password: pwd }) });
-                if (result.status === 'success') {
-                    currentUser = result.user;
-                    setupApp();
-                } else {
-                    errorMsg.innerText = result.message;
-                    errorMsg.style.display = 'block';
-                }
-            } catch (err) {
-                errorMsg.innerText = "ไม่สามารถเข้าสู่ระบบได้ โปรดตรวจสอบอินเทอร์เน็ต";
-                errorMsg.style.display = 'block';
-            } finally { document.querySelector('#loginSection button').innerText = 'เข้าสู่ระบบ'; }
+                if (result.status === 'success') { currentUser = result.user; setupApp(); } else { errorMsg.innerText = result.message; errorMsg.style.display = 'block'; }
+            } catch (err) { errorMsg.innerText = "ไม่สามารถเข้าสู่ระบบได้ โปรดตรวจสอบอินเทอร์เน็ต"; errorMsg.style.display = 'block'; } 
+            finally { btn.innerText = 'เข้าสู่ระบบ'; btn.disabled = false; }
         }
 
         function setupApp() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'flex'; 
-            document.getElementById('userNameDisplay').innerText = currentUser.name;
-            document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
+            document.getElementById('loginSection').style.display = 'none'; document.getElementById('mainApp').style.display = 'flex'; 
+            document.getElementById('userNameDisplay').innerText = currentUser.name; document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
             if(currentUser.role === 'admin') document.getElementById('navMenu3').style.display = 'block';
             fetchProjects();
         }
 
-        function logout() {
-            currentUser = null;
-            document.getElementById('loginSection').style.display = 'flex';
-            document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('userId').value = '';
-            document.getElementById('password').value = '';
-        }
+        function logout() { currentUser = null; document.getElementById('loginSection').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; document.getElementById('userId').value = ''; document.getElementById('password').value = ''; }
 
-        // --- ฟังก์ชันสำหรับ Menu 1 ---
+        // --- Menu 1 ---
         async function fetchProjects() {
             try {
                 const result = await safeFetch(`${API_URL}?action=getProjects`);
-                const select = document.getElementById('projectSelect');
-                select.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
+                const select = document.getElementById('projectSelect'); select.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
                 if (result.status === 'success') {
                     const allowedProjects = currentUser.role === 'admin' ? result.data : result.data.filter(p => currentUser.projects.includes(p.project_id));
-                    allowedProjects.forEach(p => {
-                        const option = document.createElement('option');
-                        option.value = p.project_id; option.innerText = p.project_name;
-                        select.appendChild(option);
-                    });
+                    allowedProjects.forEach(p => { const option = document.createElement('option'); option.value = p.project_id; option.innerText = p.project_name; select.appendChild(option); });
                 }
                 fetchZoneList(); 
             } catch(e) {}
         }
-
-        function loadZones() {
-            const val = document.getElementById('projectSelect').value;
-            document.getElementById('zoneCreator').style.display = val ? 'block' : 'none';
-            fetchZoneList(); 
-        }
-
+        function loadZones() { document.getElementById('zoneCreator').style.display = document.getElementById('projectSelect').value ? 'block' : 'none'; fetchZoneList(); }
         async function generateQR() { 
-            const zoneName = document.getElementById('zoneName').value.trim();
-            const projectId = document.getElementById('projectSelect').value;
+            const zoneName = document.getElementById('zoneName').value.trim(); const projectId = document.getElementById('projectSelect').value;
             if (!zoneName) return alert("กรุณาระบุชื่อพื้นที่");
-            
-            const btn = document.querySelector('#zoneCreator button');
-            const originalText = btn.innerText;
-            btn.innerText = "กำลังสร้าง..."; btn.disabled = true;
-
+            const btn = document.getElementById('btnCreateQR'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName }) });
                 if(result.status === 'success') {
-                    const generatedZoneId = result.new_zone_id; 
-                    const baseUrl = window.location.origin; 
-                    const surveyUrl = `${baseUrl}/survey?zone=${generatedZoneId}`;
-
-                    document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${generatedZoneId})`;
-                    document.getElementById('qrLink').value = surveyUrl;
-                    const qrContainer = document.getElementById('qrcode');
-                    qrContainer.innerHTML = ""; 
-                    new QRCode(qrContainer, { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
-                    document.getElementById('qrResult').style.display = 'block';
-                    document.getElementById('zoneName').value = ''; 
-                    fetchZoneList(); 
+                    const surveyUrl = `${window.location.origin}/survey?zone=${result.new_zone_id}`;
+                    document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${result.new_zone_id})`; document.getElementById('qrLink').value = surveyUrl;
+                    document.getElementById('qrcode').innerHTML = ""; new QRCode(document.getElementById('qrcode'), { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
+                    document.getElementById('qrResult').style.display = 'block'; document.getElementById('zoneName').value = ''; fetchZoneList(); 
                 } else { alert("Error: " + result.message); }
-            } catch(e) { alert("ไม่สามารถติดต่อฐานข้อมูลได้"); }
-            finally { btn.innerText = originalText; btn.disabled = false; }
+            } catch(e) { alert("ไม่สามารถติดต่อฐานข้อมูลได้"); } finally { btn.innerText = "+ สร้าง QR Code"; btn.disabled = false; }
         }
-
-        function copyLink() {
-            const linkInput = document.getElementById('qrLink');
-            linkInput.select(); document.execCommand('copy'); alert("คัดลอก Link เรียบร้อยแล้ว");
-        }
+        function copyLink() { document.getElementById('qrLink').select(); document.execCommand('copy'); alert("คัดลอก Link เรียบร้อยแล้ว"); }
 
         async function fetchZoneList() {
-            const tableBody = document.getElementById('zoneTableBody');
-            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
-            const selectedProject = document.getElementById('projectSelect').value;
-            let url = `${API_URL}?action=getZones`;
-            if (selectedProject) url += `&project_id=${selectedProject}`;
-
+            const tableBody = document.getElementById('zoneTableBody'); tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
+            const selectedProject = document.getElementById('projectSelect').value; let url = `${API_URL}?action=getZones`; if (selectedProject) url += `&project_id=${selectedProject}`;
             try {
-                const result = await safeFetch(url);
-                tableBody.innerHTML = ''; 
+                const result = await safeFetch(url); tableBody.innerHTML = ''; 
                 if (result.status === 'success' && result.data.length > 0) {
-                    let allowedZones = result.data;
-                    if (currentUser.role !== 'admin') allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
+                    let allowedZones = result.data; if (currentUser.role !== 'admin') allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
                     if (allowedZones.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลโซน</td></tr>'; return; }
-
                     allowedZones.forEach(zone => {
                         const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
-                        const surveyUrl = `${window.location.origin}/survey?zone=${zone.zone_id}`;
-                        tr.innerHTML = `<td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td><td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td><td style="padding: 10px; text-align: center;"><button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button> <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button></td>`;
+                        tr.innerHTML = `<td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td><td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td><td style="padding: 10px; text-align: center;"><button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${window.location.origin}/survey?zone=${zone.zone_id}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button> <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button></td>`;
                         tableBody.appendChild(tr);
                     });
                 } else { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีข้อมูล</td></tr>'; }
@@ -404,62 +311,43 @@
             printWindow.document.write(`<html><head><title>Print QR - ${zoneName}</title><style>body { font-family: sans-serif; text-align: center; padding: 50px; } #qr-container { display: flex; justify-content: center; margin-top:20px; }</style><scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr` + `ipt></head><body><h2>สแกนเพื่อประเมินความพึงพอใจ</h2><h3>จุดบริการ: ${zoneName} (${zoneId})</h3><div id="qr-container"></div><scr` + `ipt>new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 }); setTimeout(() => { window.print(); }, 500);</scr` + `ipt></body></html>`);
             printWindow.document.close();
         }
-
         function deleteZone(zoneId) { if(confirm(`คุณต้องการลบโซน ${zoneId} ใช่หรือไม่?`)) alert('ระบบลบข้อมูลจะพัฒนาในเฟส API ถัดไปครับ'); }
 
-        // --- ฟังก์ชันสำหรับ Menu 2 (Dashboard & Report) ---
+        // --- Menu 2 ---
         let allSurveys = [];
         async function fetchSurveyData() {
-            const tableBody = document.getElementById('surveyTableBody');
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย (Auto-Retry)...</td></tr>';
+            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย...</td></tr>';
             try {
                 const result = await safeFetch(`${API_URL}?action=getSurveyResults`);
                 if (result.status === 'success') {
                     allSurveys = (currentUser.role === 'admin') ? result.data : result.data.filter(s => currentUser.projects.includes(s.project_id));
-                    const selectProj = document.getElementById('filterProject');
-                    selectProj.innerHTML = '<option value="all">-- ทุกโครงการ --</option>';
-                    Array.from(document.getElementById('projectSelect').options).slice(1).forEach(opt => {
-                        const newOpt = document.createElement('option'); newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectProj.appendChild(newOpt);
-                    });
+                    const selectProj = document.getElementById('filterProject'); selectProj.innerHTML = '<option value="all">-- ทุกโครงการ --</option>';
+                    Array.from(document.getElementById('projectSelect').options).slice(1).forEach(opt => { const newOpt = document.createElement('option'); newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectProj.appendChild(newOpt); });
                     filterSurveys(); 
                 } else { tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
-            } catch (error) { tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว (ลอง 3 ครั้งแล้ว) โปรดกดรีเฟรช</td></tr>`; }
+            } catch (error) { tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดกดรีเฟรช</td></tr>`; }
         }
-
         function filterSurveys() {
-            const pFilter = document.getElementById('filterProject').value;
-            const rFilter = document.getElementById('filterRating').value;
-            const sFilter = document.getElementById('filterStatus').value;
-            const filtered = allSurveys.filter(s => {
-                const matchP = pFilter === 'all' || String(s.project_id) === String(pFilter);
-                const matchR = rFilter === 'all' || String(s.rating) === String(rFilter);
-                const matchS = sFilter === 'all' || String(s.status) === String(sFilter);
-                return matchP && matchR && matchS;
-            });
+            const pFilter = document.getElementById('filterProject').value; const rFilter = document.getElementById('filterRating').value; const sFilter = document.getElementById('filterStatus').value;
+            const filtered = allSurveys.filter(s => (pFilter === 'all' || String(s.project_id) === String(pFilter)) && (rFilter === 'all' || String(s.rating) === String(rFilter)) && (sFilter === 'all' || String(s.status) === String(sFilter)));
             renderSurveys(filtered); updateDashboardCards(filtered);
         }
-
         function renderSurveys(data) {
-            const tableBody = document.getElementById('surveyTableBody');
-            tableBody.innerHTML = '';
+            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '';
             if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลประเมินในระบบ</td></tr>'; return; }
             data.forEach(item => {
                 const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
                 const d = new Date(item.created_at); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                const stars = '⭐'.repeat(parseInt(item.rating) || 0);
                 const statusHtml = item.status === 'pending' ? `<span style="background:#ffeeba; color:#856404; padding:3px 8px; border-radius:12px; font-size:12px;">รอดำเนินการ</span>` : `<span style="background:#d4edda; color:#155724; padding:3px 8px; border-radius:12px; font-size:12px;">แก้ไขแล้ว</span>`;
                 const actionBtn = item.status === 'pending' ? `<button onclick="markAsResolved('${item.survey_id}')" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px;">✅ แก้ไขแล้ว</button>` : `-`;
-                tr.innerHTML = `<td style="padding: 10px;">${dateStr}</td><td style="padding: 10px;">${item.zone_name}<br><small style="color:#888;">${item.zone_id}</small></td><td style="padding: 10px; text-align: center; font-size:12px;">${stars}<br>(${item.rating})</td><td style="padding: 10px;">${item.feedback || '-'}</td><td style="padding: 10px;">${statusHtml}</td><td style="padding: 10px; text-align: center;">${actionBtn}</td>`;
+                tr.innerHTML = `<td style="padding: 10px;">${dateStr}</td><td style="padding: 10px;">${item.zone_name}<br><small style="color:#888;">${item.zone_id}</small></td><td style="padding: 10px; text-align: center; font-size:12px;">${'⭐'.repeat(parseInt(item.rating) || 0)}<br>(${item.rating})</td><td style="padding: 10px;">${item.feedback || '-'}</td><td style="padding: 10px;">${statusHtml}</td><td style="padding: 10px; text-align: center;">${actionBtn}</td>`;
                 tableBody.appendChild(tr);
             });
         }
-
         function updateDashboardCards(data) {
-            document.getElementById('dashTotal').innerText = data.length;
-            document.getElementById('dashPending').innerText = data.filter(s => s.status === 'pending').length;
+            document.getElementById('dashTotal').innerText = data.length; document.getElementById('dashPending').innerText = data.filter(s => s.status === 'pending').length;
             document.getElementById('dashAvg').innerText = data.length > 0 ? (data.reduce((acc, curr) => acc + parseInt(curr.rating || 0), 0) / data.length).toFixed(1) : '0.0';
         }
-
         async function markAsResolved(surveyId) {
             if(!confirm('ยืนยันว่าดำเนินการแก้ไขปัญหาเรียบร้อยแล้วใช่หรือไม่?')) return;
             try {
@@ -468,24 +356,15 @@
             } catch (error) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ ลองใหม่อีกครั้ง'); }
         }
 
-        // --- ระบบ Menu 3 (Admin) ---
-        let allGlobalProjects = []; 
-        let isEditingUser = false;  
-
-        function switchAdminTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active'); event.target.classList.add('active');
-        }
-
+        // --- Menu 3 ---
+        let allGlobalProjects = []; let isEditingUser = false;  
+        function switchAdminTab(tabId) { document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(tabId).classList.add('active'); event.target.classList.add('active'); }
         function closeModals() { document.getElementById('modalProject').style.display = 'none'; document.getElementById('modalUser').style.display = 'none'; }
 
         async function loadAdminTables() {
-            const tbodyP = document.getElementById('adminProjectTable');
-            const tbodyU = document.getElementById('adminUserTable');
+            const tbodyP = document.getElementById('adminProjectTable'); const tbodyU = document.getElementById('adminUserTable');
             tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย...</td></tr>';
             tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย...</td></tr>';
-
             try {
                 let result = await safeFetch(`${API_URL}?action=getAdminData`);
                 if(result.status === 'success') {
@@ -494,20 +373,17 @@
                     if (dataP.length === 0) tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color:#666;">ยังไม่มีโครงการ</td></tr>';
                     else {
                         dataP.forEach(p => {
-                            let isActive = String(p.is_active).toUpperCase() === 'TRUE';
-                            let statusHtml = isActive ? `<span style="color:green;">เปิดใช้งาน</span>` : `<span style="color:red;">ปิดชั่วคราว</span>`;
-                            let btnHtml = isActive ? `<button onclick="toggleProject('${p.project_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปิดระบบ</button>` : `<button onclick="toggleProject('${p.project_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">เปิดระบบ</button>`;
+                            let statusHtml = String(p.is_active).toUpperCase() === 'TRUE' ? `<span style="color:green;">เปิดใช้งาน</span>` : `<span style="color:red;">ปิดชั่วคราว</span>`;
+                            let btnHtml = String(p.is_active).toUpperCase() === 'TRUE' ? `<button onclick="toggleProject('${p.project_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปิดระบบ</button>` : `<button onclick="toggleProject('${p.project_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">เปิดระบบ</button>`;
                             tbodyP.innerHTML += `<tr><td style="padding:10px; border-bottom: 1px solid #eee;">${p.project_id}</td><td style="padding:10px; border-bottom: 1px solid #eee;">${p.project_name} <a href="javascript:void(0)" onclick="editProjectName('${p.project_id}', '${p.project_name}')" style="font-size:11px; color:#007bff; margin-left:5px;">[เปลี่ยนชื่อ]</a></td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${statusHtml}</td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${btnHtml}</td></tr>`;
                         });
                     }
-
                     tbodyU.innerHTML = '';
                     if (dataU.length === 0) tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color:#666;">ยังไม่มีผู้ใช้งาน</td></tr>';
                     else {
                         dataU.forEach(u => {
-                            let isActive = String(u.is_active).toUpperCase() === 'TRUE';
-                            let statusHtml = isActive ? `<span style="color:green;">ปกติ</span>` : `<span style="color:red;">ถูกระงับ</span>`;
-                            let btnHtml = isActive ? `<button onclick="toggleUser('${u.user_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ระงับ</button>` : `<button onclick="toggleUser('${u.user_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปลดแบน</button>`;
+                            let statusHtml = String(u.is_active).toUpperCase() === 'TRUE' ? `<span style="color:green;">ปกติ</span>` : `<span style="color:red;">ถูกระงับ</span>`;
+                            let btnHtml = String(u.is_active).toUpperCase() === 'TRUE' ? `<button onclick="toggleUser('${u.user_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ระงับ</button>` : `<button onclick="toggleUser('${u.user_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปลดแบน</button>`;
                             let userProjs = dataA ? dataA.filter(a => String(a.user_id) === String(u.user_id)).map(a => a.project_id) : [];
                             let editBtn = `<button onclick="openUserModal(true, '${u.user_id}', '${u.name}', '${u.role}', '${userProjs.join(',')}')" style="background:#ffc107; color:#333; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer; margin-right:5px;">✏️ แก้ไข</button>`;
                             tbodyU.innerHTML += `<tr><td style="padding:10px; border-bottom: 1px solid #eee;">${u.user_id}</td><td style="padding:10px; border-bottom: 1px solid #eee;">${u.name}<br><small style="color:#aaa;">Role: ${u.role}</small></td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${statusHtml}</td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${editBtn} ${btnHtml}</td></tr>`;
@@ -518,13 +394,15 @@
         }
 
         function openProjectModal() { document.getElementById('modalProjName').value = ''; document.getElementById('modalProject').style.display = 'flex'; }
+        
         async function submitProjectModal() {
             const pname = document.getElementById('modalProjName').value.trim();
             if (!pname) return alert('กรุณากรอกชื่อโครงการ');
+            const btn = document.getElementById('btnSaveProject'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; // 👈 แสดงสถานะกำลังบันทึก
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname }) });
                 if (result.status === 'success') { closeModals(); loadAdminTables(); fetchProjects(); } else alert(result.message);
-            } catch(e) { alert("เชื่อมต่อล้มเหลว"); }
+            } catch(e) { alert("เชื่อมต่อล้มเหลว"); } finally { btn.innerText = "บันทึกโครงการ"; btn.disabled = false; }
         }
 
         async function editProjectName(id, oldName) {
@@ -534,7 +412,6 @@
                 loadAdminTables(); fetchProjects();
             }
         }
-
         async function toggleProject(id, activeStatus) {
             if(confirm(`ต้องการ ${activeStatus ? 'เปิด' : 'ปิด'} โครงการ ${id} ใช่หรือไม่?`)) {
                 await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus }) });
@@ -549,9 +426,11 @@
             document.getElementById('modalUserId').disabled = isEdit; 
             document.getElementById('modalUserTitle').innerText = isEdit ? '✏️ แก้ไขข้อมูลผู้ใช้งาน' : '👤 เพิ่มผู้ใช้งานใหม่';
             
+            // 👈 สลับคำอธิบายรหัสผ่านตามสถานะ เพิ่มใหม่ vs แก้ไข
+            document.getElementById('modalUserPwd').placeholder = isEdit ? 'รหัสผ่าน (เว้นว่างได้ถ้าไม่ต้องการเปลี่ยน)' : 'รหัสผ่าน (ต้องระบุ)';
+            
             let assignedArr = (assignedStr || '').split(',');
             let chkContainer = document.getElementById('modalProjectCheckboxes'); chkContainer.innerHTML = ''; 
-            
             if (allGlobalProjects && allGlobalProjects.length > 0) {
                 allGlobalProjects.forEach(p => {
                     let isChecked = assignedArr.includes(p.project_id) ? 'checked' : '';
@@ -562,26 +441,24 @@
         }
 
         function toggleProjectSelection() {
-            const role = document.getElementById('modalUserRole').value;
-            const section = document.getElementById('projectAssignmentSection');
+            const role = document.getElementById('modalUserRole').value; const section = document.getElementById('projectAssignmentSection');
             if (section) section.style.display = (role === 'admin') ? 'none' : 'block';
         }
         
         async function submitUserModal() {
-            const uid = document.getElementById('modalUserId').value.trim();
-            const name = document.getElementById('modalUserName').value.trim();
-            const pwd = document.getElementById('modalUserPwd').value.trim();
-            const role = document.getElementById('modalUserRole').value;
+            const uid = document.getElementById('modalUserId').value.trim(); const name = document.getElementById('modalUserName').value.trim();
+            const pwd = document.getElementById('modalUserPwd').value.trim(); const role = document.getElementById('modalUserRole').value;
             let selectedProjs = [];
             if (role !== 'admin') document.querySelectorAll('.proj-checkbox:checked').forEach(cb => selectedProjs.push(cb.value));
             if (!uid || !name) return alert('กรุณากรอกรหัสและชื่อผู้ใช้งาน');
             if (!isEditingUser && !pwd) return alert('กรุณาตั้งรหัสผ่านสำหรับผู้ใช้ใหม่');
 
+            const btn = document.getElementById('btnSaveUser'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; // 👈 แสดงสถานะกำลังบันทึก
             let payload = isEditingUser ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; 
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 if(result.status === 'success') { closeModals(); loadAdminTables(); } else alert(result.message);
-            } catch(e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+            } catch(e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); } finally { btn.innerText = "บันทึกข้อมูลผู้ใช้"; btn.disabled = false; }
         }
 
         async function toggleUser(id, activeStatus) {
@@ -592,9 +469,10 @@
             }
         }
 
-        // --- ระบบ Menu 4 (Logs) ---
+        // --- Menu 4 (Logs) ---
         async function fetchLogs() {
             const tbody = document.getElementById('logsTableBody');
+            const btn = document.getElementById('btnRefreshLogs'); btn.innerText = "กำลังรีเฟรช..."; btn.disabled = true;
             tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย...</td></tr>';
             try {
                 const result = await safeFetch(`${API_URL}?action=getLogs`);
@@ -611,6 +489,7 @@
                     });
                 } else { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
             } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดกดรีเฟรชใหม่</td></tr>'; }
+            finally { btn.innerText = "🔄 รีเฟรชข้อมูล"; btn.disabled = false; }
         }
     </script>
 </body>
