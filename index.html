@@ -299,18 +299,14 @@
             <input type="text" id="modalUserId" placeholder="รหัสผู้ใช้งาน (Username)">
             <input type="text" id="modalUserName" placeholder="ชื่อ - นามสกุล">
             <input type="password" id="modalUserPwd" placeholder="รหัสผ่าน (เว้นว่างได้ถ้าไม่ต้องการเปลี่ยน)">
-            <select id="modalUserRole">
+            
+            <!-- เติม onchange ที่นี่เพื่อให้สลับซ่อน/โชว์กล่องสิทธิ์ได้ -->
+            <select id="modalUserRole" onchange="toggleProjectSelection()">
                 <option value="staff">เจ้าหน้าที่ทั่วไป (Staff)</option>
                 <option value="admin">ผู้ดูแลระบบ (Admin)</option>
             </select>
-            <div id="projectAssignmentSection" style="margin-top: 15px;">
-                <strong>🔗 กำหนดสิทธิ์โครงการ</strong>
-                <div id="modalProjectCheckboxes" class="checkbox-group">
-                    <!-- Checkbox จะถูกวาดด้วย JS -->
-                </div>
-            </div>
             
-            <div style="margin-top: 15px;">
+            <div id="projectAssignmentSection" style="margin-top: 15px;">
                 <strong>🔗 กำหนดสิทธิ์โครงการ</strong>
                 <div id="modalProjectCheckboxes" class="checkbox-group">
                     <!-- Checkbox จะถูกวาดด้วย JS -->
@@ -403,13 +399,13 @@
                     select.appendChild(option);
                 });
             }
-            fetchZoneList(); // โหลดตารางทันทีหลังโหลดโปรเจกต์เสร็จ
+            fetchZoneList(); 
         }
 
         function loadZones() {
             const val = document.getElementById('projectSelect').value;
             document.getElementById('zoneCreator').style.display = val ? 'block' : 'none';
-            fetchZoneList(); // โหลดตารางใหม่เมื่อเปลี่ยนโปรเจกต์
+            fetchZoneList(); 
         }
 
         async function generateQR() { 
@@ -443,7 +439,7 @@
                     document.getElementById('qrResult').style.display = 'block';
                     document.getElementById('zoneName').value = ''; 
                     
-                    fetchZoneList(); // รีเฟรชตารางเพื่อโชว์โซนที่เพิ่งสร้าง
+                    fetchZoneList(); 
                 } else { alert("Error: " + result.message); }
             } catch(e) { alert("ไม่สามารถติดต่อฐานข้อมูลได้"); }
             finally { btn.innerText = originalText; btn.disabled = false; }
@@ -550,14 +546,12 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    // กรองเฉพาะโครงการที่แอดมินคนนี้ดูแล
                     if (currentUser.role === 'admin') {
                         allSurveys = result.data;
                     } else {
                         allSurveys = result.data.filter(s => currentUser.projects.includes(s.project_id));
                     }
                     
-                    // สร้าง Dropdown โครงการสำหรับ Filter
                     const selectProj = document.getElementById('filterProject');
                     selectProj.innerHTML = '<option value="all">-- ทุกโครงการ --</option>';
                     const allowedProjects = Array.from(document.getElementById('projectSelect').options).slice(1);
@@ -567,7 +561,7 @@
                         selectProj.appendChild(newOpt);
                     });
 
-                    filterSurveys(); // เรียกฟังก์ชันแสดงผล
+                    filterSurveys(); 
                 } else {
                     tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">ดึงข้อมูลล้มเหลว</td></tr>';
                 }
@@ -581,7 +575,6 @@
             const rFilter = document.getElementById('filterRating').value;
             const sFilter = document.getElementById('filterStatus').value;
 
-            // กรองข้อมูลตาม Dropdown ที่เลือก
             const filtered = allSurveys.filter(s => {
                 const matchP = pFilter === 'all' || String(s.project_id) === String(pFilter);
                 const matchR = rFilter === 'all' || String(s.rating) === String(rFilter);
@@ -654,7 +647,7 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    fetchSurveyData(); // อัปเดตตารางใหม่ทันทีหลังกดแก้ไขแล้ว
+                    fetchSurveyData(); 
                 } else {
                     alert('Error: ' + result.message);
                 }
@@ -667,8 +660,8 @@
         // --- ระบบ Menu 3 (เวอร์ชันใหม่ Tabs & Modals) ---
         // =====================================
         
-        let allGlobalProjects = []; // เก็บโปรเจกต์ไว้ใช้ใน Modal
-        let isEditingUser = false;  // สถานะว่ากำลังแก้ User หรือสร้างใหม่
+        let allGlobalProjects = []; 
+        let isEditingUser = false;  
 
         function switchAdminTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -682,7 +675,6 @@
             document.getElementById('modalUser').style.display = 'none';
         }
 
-        // --- ระบบโหลดข้อมูลตาราง ---
         async function loadAdminTables() {
             try {
                 // โหลดโปรเจกต์
@@ -691,7 +683,7 @@
                 let tbodyP = document.getElementById('adminProjectTable');
                 tbodyP.innerHTML = '';
                 if(dataP.status === 'success') {
-                    allGlobalProjects = dataP.data; // เก็บไว้สร้าง Checkbox
+                    allGlobalProjects = dataP.data; 
                     dataP.data.forEach(p => {
                         let isActive = String(p.is_active).toUpperCase() === 'TRUE';
                         let statusHtml = isActive ? `<span style="color:green;">เปิดใช้งาน</span>` : `<span style="color:red;">ปิดชั่วคราว</span>`;
@@ -716,10 +708,7 @@
                         let btnHtml = isActive ? `<button onclick="toggleUser('${u.user_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ระงับ</button>` 
                                                : `<button onclick="toggleUser('${u.user_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปลดแบน</button>`;
                         
-                        // หาว่า User นี้มีสิทธิ์อะไรบ้าง
                         let userProjs = dataA.data ? dataA.data.filter(a => String(a.user_id) === String(u.user_id)).map(a => a.project_id) : [];
-                        
-                        // สร้างปุ่ม Edit (ส่งข้อมูลไปเปิด Modal)
                         let editBtn = `<button onclick="openUserModal(true, '${u.user_id}', '${u.name}', '${u.role}', '${userProjs.join(',')}')" style="background:#ffc107; color:#333; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer; margin-right:5px;">✏️ แก้ไข</button>`;
 
                         tbodyU.innerHTML += `<tr><td style="padding:10px; border-bottom: 1px solid #eee;">${u.user_id}</td><td style="padding:10px; border-bottom: 1px solid #eee;">${u.name}<br><small style="color:#aaa;">Role: ${u.role}</small></td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${statusHtml}</td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${editBtn} ${btnHtml}</td></tr>`;
@@ -765,22 +754,27 @@
             isEditingUser = isEdit;
             document.getElementById('modalUserId').value = uid;
             document.getElementById('modalUserName').value = name;
-            document.getElementById('modalUserPwd').value = ''; // เคลียร์พาสเวิร์ดเสมอ
+            document.getElementById('modalUserPwd').value = ''; 
             document.getElementById('modalUserRole').value = role;
             
-            document.getElementById('modalUserId').disabled = isEdit; // ห้ามแก้ Username ถ้ากำลัง Edit
+            document.getElementById('modalUserId').disabled = isEdit; 
             document.getElementById('modalUserTitle').innerText = isEdit ? '✏️ แก้ไขข้อมูลผู้ใช้งาน' : '👤 เพิ่มผู้ใช้งานใหม่';
             
             // วาด Checkbox โครงการ
-            let assignedArr = assignedStr.split(',');
+            let assignedArr = (assignedStr || '').split(',');
             let chkContainer = document.getElementById('modalProjectCheckboxes');
-            chkContainer.innerHTML = '';
-            allGlobalProjects.forEach(p => {
-                let isChecked = assignedArr.includes(p.project_id) ? 'checked' : '';
-                chkContainer.innerHTML += `<label><input type="checkbox" class="proj-checkbox" value="${p.project_id}" ${isChecked}> ${p.project_name}</label>`;
-            });
+            chkContainer.innerHTML = ''; 
+            
+            if (allGlobalProjects && allGlobalProjects.length > 0) {
+                allGlobalProjects.forEach(p => {
+                    let isChecked = assignedArr.includes(p.project_id) ? 'checked' : '';
+                    chkContainer.innerHTML += `<label><input type="checkbox" class="proj-checkbox" value="${p.project_id}" ${isChecked}> ${p.project_name}</label>`;
+                });
+            } else {
+                chkContainer.innerHTML = '<span style="color:#888; font-size:12px;">ไม่พบข้อมูลโครงการในระบบ หรือกำลังโหลดข้อมูล</span>';
+            }
 
-            toggleProjectSelection();
+            toggleProjectSelection(); // เช็กเพื่อซ่อน/โชว์
             
             document.getElementById('modalUser').style.display = 'flex';
         }
@@ -788,10 +782,12 @@
         function toggleProjectSelection() {
             const role = document.getElementById('modalUserRole').value;
             const section = document.getElementById('projectAssignmentSection');
-            if (role === 'admin') {
-                section.style.display = 'none'; // ซ่อนถ้าเป็น Admin
-            } else {
-                section.style.display = 'block'; // โชว์ถ้าเป็น Staff
+            if (section) {
+                if (role === 'admin') {
+                    section.style.display = 'none'; // ซ่อนถ้าเป็น Admin
+                } else {
+                    section.style.display = 'block'; // โชว์ถ้าเป็น Staff
+                }
             }
         }
         
@@ -801,16 +797,18 @@
             const pwd = document.getElementById('modalUserPwd').value.trim();
             const role = document.getElementById('modalUserRole').value;
             
-            // รวบรวมสิทธิ์ที่ถูกติ๊ก
             let selectedProjs = [];
-            document.querySelectorAll('.proj-checkbox:checked').forEach(cb => selectedProjs.push(cb.value));
+            // ดึงค่าโปรเจกต์เฉพาะตอนที่เป็น Staff
+            if (role !== 'admin') {
+                document.querySelectorAll('.proj-checkbox:checked').forEach(cb => selectedProjs.push(cb.value));
+            }
 
             if (!uid || !name) return alert('กรุณากรอกรหัสและชื่อผู้ใช้งาน');
             if (!isEditingUser && !pwd) return alert('กรุณาตั้งรหัสผ่านสำหรับผู้ใช้ใหม่');
 
             let payload = isEditingUser 
-                ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } // โหมดแก้ไข
-                : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; // โหมดสร้างใหม่
+                ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } 
+                : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; 
 
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
