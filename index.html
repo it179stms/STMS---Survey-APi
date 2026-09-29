@@ -42,11 +42,25 @@
         /* Card & Forms */
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; }
         h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
-        /*input[type="text"], select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }*/
         input[type="text"], input[type="password"], select { 
             width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; 
         }
         .btn-primary { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+
+        /* --- CSS สำหรับ Tabs และ Modal --- */
+        .tab-header { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 16px; color: #666; font-family: inherit; font-weight: bold; }
+        .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; margin-bottom: -2px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 450px; position: relative; }
+        .close-btn { position: absolute; right: 20px; top: 20px; font-size: 20px; cursor: pointer; color: #888; border:none; background:none;}
+        .close-btn:hover { color: red; }
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; max-height: 150px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+        .checkbox-group label { display: flex; align-items: center; font-size: 14px; gap: 5px; cursor: pointer; margin: 0; }
+        
     </style>
 </head>
 <body>
@@ -134,7 +148,7 @@
                 </div>
             </div>
 
-<!-- Menu 2: Dashboard -->
+            <!-- Menu 2: Dashboard -->
             <div id="menu2" class="content-section">
                 <h2>Dashboard & รายการประเมิน</h2>
                 
@@ -195,77 +209,64 @@
                 </div>
             </div>
 
-<!-- Menu 3: User & Project Management -->
+            <!-- Menu 3: User & Project Management -->
             <div id="menu3" class="content-section">
-                <h2>User & Project Management (เฉพาะแอดมิน)</h2>
-                
-                <!-- ส่วนที่ 1: ฟอร์มกรอกข้อมูล 3 การ์ด -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                    <!-- สร้างโครงการ -->
-                    <div class="card">
-                        <h3 style="margin-top:0; color:#007bff;">🏢 เพิ่มโครงการใหม่</h3>
-                        <p style="font-size:12px; color:#666; margin-top:0;">ระบบจะสร้างรหัสโครงการ (PRJxxx) ให้อัตโนมัติ</p>
-                        <input type="text" id="newProjName" placeholder="ชื่อโครงการ">
-                        <button class="btn-primary" onclick="createProject()" style="width:100%; margin-top:10px;">บันทึกโครงการ</button>
-                    </div>
-                    <!-- สร้างผู้ใช้งาน -->
-                    <div class="card">
-                        <h3 style="margin-top:0; color:#28a745;">👤 สร้างผู้ใช้งานใหม่</h3>
-                        <input type="text" id="newUserId" placeholder="รหัสผู้ใช้งาน (Username)">
-                        <input type="text" id="newUserName" placeholder="ชื่อ - นามสกุล">
-                        <input type="password" id="newUserPwd" placeholder="รหัสผ่าน (Password)">
-                        <select id="newUserRole">
-                            <option value="staff">เจ้าหน้าที่ทั่วไป (Staff)</option>
-                            <option value="admin">ผู้ดูแลระบบ (Admin)</option>
-                        </select>
-                        <button class="btn-primary" onclick="createUser()" style="background:#28a745; width:100%; margin-top:10px;">สร้างบัญชีผู้ใช้</button>
-                    </div>
-                    <!-- กำหนดสิทธิ์ -->
-                    <div class="card">
-                        <h3 style="margin-top:0; color:#6f42c1;">🔗 กำหนดสิทธิ์โครงการ</h3>
-                        <p style="font-size:12px; color:#666; margin-top:0;">มอบหมายโครงการให้เจ้าหน้าที่</p>
-                        <input type="text" id="assignUserId" placeholder="รหัสผู้ใช้งาน (เช่น USR002)">
-                        <select id="assignProjId"><option value="">-- เลือกโครงการ --</option></select>
-                        <button class="btn-primary" onclick="assignProject()" style="background:#6f42c1; width:100%; margin-top:10px;">เพิ่มสิทธิ์เข้าถึง</button>
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2>User & Project Management (เฉพาะแอดมิน)</h2>
                 </div>
 
-                <!-- ส่วนที่ 2: ตารางแสดงรายการเพื่อแก้ไข -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
-                    <!-- ตารางโครงการ -->
-                    <div class="card" style="margin-bottom: 0;">
-                        <h3 style="margin-top:0;">📋 รายชื่อโครงการทั้งหมด</h3>
+                <!-- แท็บสลับหน้า -->
+                <div class="tab-header">
+                    <button class="tab-btn active" onclick="switchAdminTab('tab-users')">👥 จัดการผู้ใช้งาน (Users)</button>
+                    <button class="tab-btn" onclick="switchAdminTab('tab-projects')">🏢 จัดการโครงการ (Projects)</button>
+                </div>
+
+                <!-- Tab 1: จัดการผู้ใช้งาน -->
+                <div id="tab-users" class="tab-content active card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+                        <h3 style="margin:0;">รายชื่อผู้ใช้งานทั้งหมด</h3>
+                        <button onclick="openUserModal()" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มผู้ใช้งานใหม่</button>
+                    </div>
+                    <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
                             <thead style="background: #e9ecef;">
                                 <tr>
-                                    <th style="padding: 10px;">รหัส</th>
-                                    <th style="padding: 10px;">ชื่อโครงการ</th>
-                                    <th style="padding: 10px; text-align:center;">สถานะ</th>
-                                    <th style="padding: 10px; text-align:center;">จัดการ</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc;">User ID</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc;">ชื่อพนักงาน</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc; text-align:center;">สถานะ</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc; text-align:center;">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="adminProjectTable"><tr><td colspan="4" style="text-align: center; padding: 10px;">กำลังโหลด...</td></tr></tbody>
-                        </table>
-                    </div>
-
-                    <!-- ตารางพนักงาน -->
-                    <div class="card" style="margin-bottom: 0;">
-                        <h3 style="margin-top:0;">👥 รายชื่อผู้ใช้งานทั้งหมด</h3>
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;">
-                                <tr>
-                                    <th style="padding: 10px;">User ID</th>
-                                    <th style="padding: 10px;">ชื่อพนักงาน</th>
-                                    <th style="padding: 10px; text-align:center;">สถานะ</th>
-                                    <th style="padding: 10px; text-align:center;">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminUserTable"><tr><td colspan="4" style="text-align: center; padding: 10px;">กำลังโหลด...</td></tr></tbody>
+                            <tbody id="adminUserTable">
+                                <tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
-                
-            </div> <!-- ปิด div ของ Menu 3 -->
+
+                <!-- Tab 2: จัดการโครงการ -->
+                <div id="tab-projects" class="tab-content card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+                        <h3 style="margin:0;">รายชื่อโครงการทั้งหมด</h3>
+                        <button onclick="openProjectModal()" style="background:#007bff; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มโครงการใหม่</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                            <thead style="background: #e9ecef;">
+                                <tr>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc;">รหัส</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc;">ชื่อโครงการ</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc; text-align:center;">สถานะ</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #ccc; text-align:center;">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminProjectTable">
+                                <tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             <!-- Menu 4: Logs -->
             <div id="menu4" class="content-section">
@@ -277,13 +278,49 @@
 
         </div>
     </div>
+    
+    <!-- Modal: สร้าง/แก้ โครงการ -->
+    <div id="modalProject" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModals()">✖</button>
+            <h3 id="modalProjectTitle" style="margin-top:0; color:#007bff;">🏢 เพิ่มโครงการใหม่</h3>
+            <p style="font-size:12px; color:#666; margin-top:0;">ระบบจะสร้างรหัสโครงการให้อัตโนมัติ</p>
+            <input type="text" id="modalProjName" placeholder="ชื่อโครงการ">
+            <button class="btn-primary" onclick="submitProjectModal()" style="width:100%; margin-top:10px;">บันทึกโครงการ</button>
+        </div>
+    </div>
+
+    <!-- Modal: สร้าง/แก้ ผู้ใช้งาน & กำหนดสิทธิ์ -->
+    <div id="modalUser" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModals()">✖</button>
+            <h3 id="modalUserTitle" style="margin-top:0; color:#28a745;">👤 เพิ่มผู้ใช้งานใหม่</h3>
+            
+            <input type="text" id="modalUserId" placeholder="รหัสผู้ใช้งาน (Username)">
+            <input type="text" id="modalUserName" placeholder="ชื่อ - นามสกุล">
+            <input type="password" id="modalUserPwd" placeholder="รหัสผ่าน (เว้นว่างได้ถ้าไม่ต้องการเปลี่ยน)">
+            <select id="modalUserRole">
+                <option value="staff">เจ้าหน้าที่ทั่วไป (Staff)</option>
+                <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+            </select>
+            
+            <div style="margin-top: 15px;">
+                <strong>🔗 กำหนดสิทธิ์โครงการ</strong>
+                <div id="modalProjectCheckboxes" class="checkbox-group">
+                    <!-- Checkbox จะถูกวาดด้วย JS -->
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="submitUserModal()" style="background:#28a745; width:100%; margin-top:15px;">บันทึกข้อมูลผู้ใช้</button>
+        </div>
+    </div>
 
     <script>
         // ⚠️ Web App URL ของคุณ
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
-// --- ระบบสลับเมนู (SPA Routing) ---
+        // --- ระบบสลับเมนู (SPA Routing) ---
         function switchMenu(targetMenuId) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
@@ -295,8 +332,7 @@
             if (targetMenuId === 'menu1') fetchZoneList();
             if (targetMenuId === 'menu2') fetchSurveyData();
             if (targetMenuId === 'menu3') {
-                updateAssignProjectDropdown(); // โหลด Dropdown
-                loadAdminTables();             // 👈 โหลดตาราง! (น่าจะตกหล่นบรรทัดนี้ไปครับ)
+                loadAdminTables();             
             }
         }
 
@@ -467,7 +503,7 @@
             }
         }
 
-function printQR(zoneId, zoneName, url) {
+        function printQR(zoneId, zoneName, url) {
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <html><head>
@@ -621,71 +657,26 @@ function printQR(zoneId, zoneName, url) {
             }
         }
 
-        // --- ฟังก์ชันสำหรับ Menu 3 (User & Project Management) ---
-        function updateAssignProjectDropdown() {
-            const selectAssign = document.getElementById('assignProjId');
-            selectAssign.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
-            const allProjects = Array.from(document.getElementById('projectSelect').options).slice(1);
-            allProjects.forEach(opt => {
-                const newOpt = document.createElement('option');
-                newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectAssign.appendChild(newOpt);
-            });
+        // =====================================
+        // --- ระบบ Menu 3 (เวอร์ชันใหม่ Tabs & Modals) ---
+        // =====================================
+        
+        let allGlobalProjects = []; // เก็บโปรเจกต์ไว้ใช้ใน Modal
+        let isEditingUser = false;  // สถานะว่ากำลังแก้ User หรือสร้างใหม่
+
+        function switchAdminTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
         }
 
-        async function createProject() {
-            const pname = document.getElementById('newProjName').value.trim();
-            if (!pname) return alert('กรุณากรอกชื่อโครงการ');
-
-            try {
-                // ส่งไปแค่ชื่อโครงการอย่างเดียว รหัสไปสร้างเอาหลังบ้าน
-                const res = await fetch(API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'createProject', project_name: pname }) 
-                });
-                const result = await res.json();
-                
-                alert(result.message);
-                
-                if (result.status === 'success') {
-                    document.getElementById('newProjName').value = '';
-                    fetchProjects(); // รีเฟรชรายชื่อโปรเจกต์ให้โชว์ใน Dropdown อัตโนมัติ
-                }
-            } catch (e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+        function closeModals() {
+            document.getElementById('modalProject').style.display = 'none';
+            document.getElementById('modalUser').style.display = 'none';
         }
 
-        async function createUser() {
-            const uid = document.getElementById('newUserId').value.trim();
-            const name = document.getElementById('newUserName').value.trim();
-            const pwd = document.getElementById('newUserPwd').value.trim();
-            const role = document.getElementById('newUserRole').value;
-            if (!uid || !name || !pwd) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role }) });
-                const result = await res.json();
-                alert(result.message);
-                if (result.status === 'success') {
-                    document.getElementById('newUserId').value = ''; document.getElementById('newUserName').value = ''; document.getElementById('newUserPwd').value = '';
-                }
-            } catch (e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
-        }
-
-        async function assignProject() {
-            const uid = document.getElementById('assignUserId').value.trim();
-            const pid = document.getElementById('assignProjId').value;
-            if (!uid || !pid) return alert('กรุณาระบุผู้ใช้งานและโครงการที่ต้องการ');
-
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'assignProject', assign_user: uid, assign_project: pid }) });
-                const result = await res.json();
-                alert(result.message);
-                if (result.status === 'success') {
-                    document.getElementById('assignUserId').value = ''; document.getElementById('assignProjId').value = '';
-                }
-            } catch (e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
-        }
-
-        // --- ฟังก์ชันจัดการข้อมูล (Edit/Delete) สำหรับ Menu 3 ---
+        // --- ระบบโหลดข้อมูลตาราง ---
         async function loadAdminTables() {
             try {
                 // โหลดโปรเจกต์
@@ -694,29 +685,57 @@ function printQR(zoneId, zoneName, url) {
                 let tbodyP = document.getElementById('adminProjectTable');
                 tbodyP.innerHTML = '';
                 if(dataP.status === 'success') {
+                    allGlobalProjects = dataP.data; // เก็บไว้สร้าง Checkbox
                     dataP.data.forEach(p => {
                         let isActive = String(p.is_active).toUpperCase() === 'TRUE';
                         let statusHtml = isActive ? `<span style="color:green;">เปิดใช้งาน</span>` : `<span style="color:red;">ปิดชั่วคราว</span>`;
-                        let btnHtml = isActive ? `<button onclick="toggleProject('${p.project_id}', false)" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:4px; font-size:12px; cursor:pointer;">ปิดระบบ</button>` 
-                                               : `<button onclick="toggleProject('${p.project_id}', true)" style="background:#28a745; color:white; border:none; padding:3px 8px; border-radius:4px; font-size:12px; cursor:pointer;">เปิดระบบ</button>`;
-                        tbodyP.innerHTML += `<tr><td style="padding:5px 10px;">${p.project_id}</td><td style="padding:5px 10px;">${p.project_name} <a href="javascript:void(0)" onclick="editProjectName('${p.project_id}', '${p.project_name}')" style="font-size:10px; color:#007bff;">[แก้ชื่อ]</a></td><td style="padding:5px 10px; text-align:center;">${statusHtml}</td><td style="padding:5px 10px; text-align:center;">${btnHtml}</td></tr>`;
+                        let btnHtml = isActive ? `<button onclick="toggleProject('${p.project_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปิดระบบ</button>` 
+                                               : `<button onclick="toggleProject('${p.project_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">เปิดระบบ</button>`;
+                        tbodyP.innerHTML += `<tr><td style="padding:10px; border-bottom: 1px solid #eee;">${p.project_id}</td><td style="padding:10px; border-bottom: 1px solid #eee;">${p.project_name} <a href="javascript:void(0)" onclick="editProjectName('${p.project_id}', '${p.project_name}')" style="font-size:11px; color:#007bff; margin-left:5px;">[เปลี่ยนชื่อ]</a></td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${statusHtml}</td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${btnHtml}</td></tr>`;
                     });
                 }
 
-                // โหลด Users
+                // โหลด Users และ สิทธิ์
                 let resU = await fetch(`${API_URL}?action=getUsers`);
                 let dataU = await resU.json();
+                let resA = await fetch(`${API_URL}?action=getAssignments`);
+                let dataA = await resA.json();
+
                 let tbodyU = document.getElementById('adminUserTable');
                 tbodyU.innerHTML = '';
                 if(dataU.status === 'success') {
                     dataU.data.forEach(u => {
                         let isActive = String(u.is_active).toUpperCase() === 'TRUE';
                         let statusHtml = isActive ? `<span style="color:green;">ปกติ</span>` : `<span style="color:red;">ถูกระงับ</span>`;
-                        let btnHtml = isActive ? `<button onclick="toggleUser('${u.user_id}', false)" style="background:#dc3545; color:white; border:none; padding:3px 8px; border-radius:4px; font-size:12px; cursor:pointer;">ระงับ</button>` 
-                                               : `<button onclick="toggleUser('${u.user_id}', true)" style="background:#28a745; color:white; border:none; padding:3px 8px; border-radius:4px; font-size:12px; cursor:pointer;">ปลดแบน</button>`;
-                        tbodyU.innerHTML += `<tr><td style="padding:5px 10px;">${u.user_id} <a href="javascript:void(0)" onclick="resetPwd('${u.user_id}')" style="font-size:10px; color:#ff9800;">[เปลี่ยนรหัส]</a></td><td style="padding:5px 10px;">${u.name}<br><small style="color:#aaa;">Role: ${u.role}</small></td><td style="padding:5px 10px; text-align:center;">${statusHtml}</td><td style="padding:5px 10px; text-align:center;">${btnHtml}</td></tr>`;
+                        let btnHtml = isActive ? `<button onclick="toggleUser('${u.user_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ระงับ</button>` 
+                                               : `<button onclick="toggleUser('${u.user_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปลดแบน</button>`;
+                        
+                        // หาว่า User นี้มีสิทธิ์อะไรบ้าง
+                        let userProjs = dataA.data ? dataA.data.filter(a => String(a.user_id) === String(u.user_id)).map(a => a.project_id) : [];
+                        
+                        // สร้างปุ่ม Edit (ส่งข้อมูลไปเปิด Modal)
+                        let editBtn = `<button onclick="openUserModal(true, '${u.user_id}', '${u.name}', '${u.role}', '${userProjs.join(',')}')" style="background:#ffc107; color:#333; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer; margin-right:5px;">✏️ แก้ไข</button>`;
+
+                        tbodyU.innerHTML += `<tr><td style="padding:10px; border-bottom: 1px solid #eee;">${u.user_id}</td><td style="padding:10px; border-bottom: 1px solid #eee;">${u.name}<br><small style="color:#aaa;">Role: ${u.role}</small></td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${statusHtml}</td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${editBtn} ${btnHtml}</td></tr>`;
                     });
                 }
+            } catch(e) {}
+        }
+
+        // --- ระบบ Project Modal ---
+        function openProjectModal() {
+            document.getElementById('modalProjName').value = '';
+            document.getElementById('modalProject').style.display = 'flex';
+        }
+
+        async function submitProjectModal() {
+            const pname = document.getElementById('modalProjName').value.trim();
+            if (!pname) return alert('กรุณากรอกชื่อโครงการ');
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname }) });
+                const result = await res.json();
+                if (result.status === 'success') { closeModals(); loadAdminTables(); fetchProjects(); }
+                else alert(result.message);
             } catch(e) {}
         }
 
@@ -727,19 +746,62 @@ function printQR(zoneId, zoneName, url) {
                 loadAdminTables(); fetchProjects();
             }
         }
+
         async function toggleProject(id, activeStatus) {
             if(confirm(`ต้องการ ${activeStatus ? 'เปิด' : 'ปิด'} โครงการ ${id} ใช่หรือไม่?`)) {
                 await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus }) });
                 loadAdminTables(); fetchProjects();
             }
         }
-        async function resetPwd(id) {
-            let newPwd = prompt(`กรุณากรอกรหัสผ่านใหม่สำหรับพนักงาน ${id}`);
-            if(newPwd && newPwd.trim() !== '') {
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUser', user_id: id, new_password: newPwd }) });
-                alert('เปลี่ยนรหัสผ่านเรียบร้อย');
-            }
+
+        // --- ระบบ User Modal ---
+        function openUserModal(isEdit = false, uid = '', name = '', role = 'staff', assignedStr = '') {
+            isEditingUser = isEdit;
+            document.getElementById('modalUserId').value = uid;
+            document.getElementById('modalUserName').value = name;
+            document.getElementById('modalUserPwd').value = ''; // เคลียร์พาสเวิร์ดเสมอ
+            document.getElementById('modalUserRole').value = role;
+            
+            document.getElementById('modalUserId').disabled = isEdit; // ห้ามแก้ Username ถ้ากำลัง Edit
+            document.getElementById('modalUserTitle').innerText = isEdit ? '✏️ แก้ไขข้อมูลผู้ใช้งาน' : '👤 เพิ่มผู้ใช้งานใหม่';
+            
+            // วาด Checkbox โครงการ
+            let assignedArr = assignedStr.split(',');
+            let chkContainer = document.getElementById('modalProjectCheckboxes');
+            chkContainer.innerHTML = '';
+            allGlobalProjects.forEach(p => {
+                let isChecked = assignedArr.includes(p.project_id) ? 'checked' : '';
+                chkContainer.innerHTML += `<label><input type="checkbox" class="proj-checkbox" value="${p.project_id}" ${isChecked}> ${p.project_name}</label>`;
+            });
+
+            document.getElementById('modalUser').style.display = 'flex';
         }
+
+        async function submitUserModal() {
+            const uid = document.getElementById('modalUserId').value.trim();
+            const name = document.getElementById('modalUserName').value.trim();
+            const pwd = document.getElementById('modalUserPwd').value.trim();
+            const role = document.getElementById('modalUserRole').value;
+            
+            // รวบรวมสิทธิ์ที่ถูกติ๊ก
+            let selectedProjs = [];
+            document.querySelectorAll('.proj-checkbox:checked').forEach(cb => selectedProjs.push(cb.value));
+
+            if (!uid || !name) return alert('กรุณากรอกรหัสและชื่อผู้ใช้งาน');
+            if (!isEditingUser && !pwd) return alert('กรุณาตั้งรหัสผ่านสำหรับผู้ใช้ใหม่');
+
+            let payload = isEditingUser 
+                ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } // โหมดแก้ไข
+                : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; // โหมดสร้างใหม่
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const result = await res.json();
+                if(result.status === 'success') { closeModals(); loadAdminTables(); }
+                else alert(result.message);
+            } catch(e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+        }
+
         async function toggleUser(id, activeStatus) {
             if(id === currentUser.user_id) return alert('ไม่สามารถระงับบัญชีตัวเองได้ครับ');
             if(confirm(`ต้องการ ${activeStatus ? 'ปลดระงับ' : 'ระงับบัญชี'} ${id} ใช่หรือไม่?`)) {
