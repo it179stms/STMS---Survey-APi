@@ -238,15 +238,34 @@
         </div>
     </div>
 
-    <script>
+<script>
         // ⚠️ Web App URL ของคุณ
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
+        // 🚀 พระเอกของเรา: ฟังก์ชันอัจฉริยะที่แอบ "พยายามดึงข้อมูลใหม่ (Auto-Retry)" หาก Google ล่ม
+        async function safeFetch(url, options = {}) {
+            let retries = 3; // ลองซ้ำสูงสุด 3 ครั้ง
+            let delay = 1000; // รอ 1 วินาที
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error("Google HTTP Error");
+                    const text = await response.text();
+                    return JSON.parse(text); // ถ้าสำเร็จ คืนค่าเป็น JSON กลับไปเลย
+                } catch (error) {
+                    if (i === retries - 1) throw new Error("เซิร์ฟเวอร์ของ Google ไม่ตอบสนอง (ลองซ้ำ 3 ครั้งแล้ว)");
+                    console.warn(`การเชื่อมต่อขัดข้อง กำลังลองใหม่ครั้งที่ ${i + 1}...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay += 1000; // รอบต่อไปให้รอนานขึ้นเป็น 2 วิ, 3 วิ...
+                }
+            }
+        }
+
+        // --- ระบบสลับเมนู ---
         function switchMenu(targetMenuId) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            
             document.getElementById(targetMenuId).classList.add('active');
             event.target.classList.add('active');
             
@@ -256,6 +275,7 @@
             if (targetMenuId === 'menu4') fetchLogs();
         }
 
+        // --- ระบบ Login ---
         async function handleLogin() {
             const uid = document.getElementById('userId').value;
             const pwd = document.getElementById('password').value;
@@ -264,8 +284,8 @@
             document.querySelector('#loginSection button').innerText = 'กำลังตรวจสอบ...';
 
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', user_id: uid, password: pwd }) });
-                const result = await response.json();
+                // ใช้ safeFetch แทน fetch ปกติ
+                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', user_id: uid, password: pwd }) });
                 if (result.status === 'success') {
                     currentUser = result.user;
                     setupApp();
@@ -274,7 +294,7 @@
                     errorMsg.style.display = 'block';
                 }
             } catch (err) {
-                errorMsg.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ";
+                errorMsg.innerText = "ไม่สามารถเข้าสู่ระบบได้ โปรดตรวจสอบอินเทอร์เน็ต";
                 errorMsg.style.display = 'block';
             } finally { document.querySelector('#loginSection button').innerText = 'เข้าสู่ระบบ'; }
         }
@@ -284,10 +304,7 @@
             document.getElementById('mainApp').style.display = 'flex'; 
             document.getElementById('userNameDisplay').innerText = currentUser.name;
             document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
-
-            if(currentUser.role === 'admin') {
-                document.getElementById('navMenu3').style.display = 'block';
-            }
+            if(currentUser.role === 'admin') document.getElementById('navMenu3').style.display = 'block';
             fetchProjects();
         }
 
@@ -299,20 +316,22 @@
             document.getElementById('password').value = '';
         }
 
+        // --- ฟังก์ชันสำหรับ Menu 1 ---
         async function fetchProjects() {
-            const response = await fetch(`${API_URL}?action=getProjects`);
-            const result = await response.json();
-            const select = document.getElementById('projectSelect');
-            select.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
-            if (result.status === 'success') {
-                const allowedProjects = currentUser.role === 'admin' ? result.data : result.data.filter(p => currentUser.projects.includes(p.project_id));
-                allowedProjects.forEach(p => {
-                    const option = document.createElement('option');
-                    option.value = p.project_id; option.innerText = p.project_name;
-                    select.appendChild(option);
-                });
-            }
-            fetchZoneList(); 
+            try {
+                const result = await safeFetch(`${API_URL}?action=getProjects`);
+                const select = document.getElementById('projectSelect');
+                select.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
+                if (result.status === 'success') {
+                    const allowedProjects = currentUser.role === 'admin' ? result.data : result.data.filter(p => currentUser.projects.includes(p.project_id));
+                    allowedProjects.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.project_id; option.innerText = p.project_name;
+                        select.appendChild(option);
+                    });
+                }
+                fetchZoneList(); 
+            } catch(e) {}
         }
 
         function loadZones() {
@@ -331,11 +350,7 @@
             btn.innerText = "กำลังสร้าง..."; btn.disabled = true;
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST', body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName })
-                });
-                const result = await response.json();
-                
+                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName }) });
                 if(result.status === 'success') {
                     const generatedZoneId = result.new_zone_id; 
                     const baseUrl = window.location.origin; 
@@ -343,11 +358,9 @@
 
                     document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${generatedZoneId})`;
                     document.getElementById('qrLink').value = surveyUrl;
-
                     const qrContainer = document.getElementById('qrcode');
                     qrContainer.innerHTML = ""; 
                     new QRCode(qrContainer, { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
-
                     document.getElementById('qrResult').style.display = 'block';
                     document.getElementById('zoneName').value = ''; 
                     fetchZoneList(); 
@@ -369,92 +382,48 @@
             if (selectedProject) url += `&project_id=${selectedProject}`;
 
             try {
-                const response = await fetch(url);
-                const result = await response.json();
+                const result = await safeFetch(url);
                 tableBody.innerHTML = ''; 
-
                 if (result.status === 'success' && result.data.length > 0) {
                     let allowedZones = result.data;
                     if (currentUser.role !== 'admin') allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
-                    if (allowedZones.length === 0) {
-                        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลโซน</td></tr>'; return;
-                    }
+                    if (allowedZones.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลโซน</td></tr>'; return; }
 
                     allowedZones.forEach(zone => {
-                        const tr = document.createElement('tr');
-                        tr.style.borderBottom = "1px solid #eee";
+                        const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
                         const surveyUrl = `${window.location.origin}/survey?zone=${zone.zone_id}`;
-                        tr.innerHTML = `
-                            <td style="padding: 10px;">${zone.zone_id}</td>
-                            <td style="padding: 10px;">${zone.zone_name}</td>
-                            <td style="padding: 10px;">
-                                <span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span>
-                            </td>
-                            <td style="padding: 10px; text-align: center;">
-                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button>
-                                <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button>
-                            </td>
-                        `;
+                        tr.innerHTML = `<td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td><td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td><td style="padding: 10px; text-align: center;"><button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button> <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button></td>`;
                         tableBody.appendChild(tr);
                     });
                 } else { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีข้อมูล</td></tr>'; }
-            } catch (error) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">ดึงข้อมูลล้มเหลว</td></tr>'; }
+            } catch (error) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">อินเทอร์เน็ตมีปัญหา โปรดรีเฟรช</td></tr>'; }
         }
 
         function printQR(zoneId, zoneName, url) {
             const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html><head><title>Print QR - ${zoneName}</title><style>body { font-family: sans-serif; text-align: center; padding: 50px; } #qr-container { display: flex; justify-content: center; margin-top:20px; }</style><scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr` + `ipt></head><body><h2>สแกนเพื่อประเมินความพึงพอใจ</h2><h3>จุดบริการ: ${zoneName} (${zoneId})</h3><div id="qr-container"></div><scr` + `ipt>new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 }); setTimeout(() => { window.print(); }, 500);</scr` + `ipt></body></html>
-            `);
+            printWindow.document.write(`<html><head><title>Print QR - ${zoneName}</title><style>body { font-family: sans-serif; text-align: center; padding: 50px; } #qr-container { display: flex; justify-content: center; margin-top:20px; }</style><scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr` + `ipt></head><body><h2>สแกนเพื่อประเมินความพึงพอใจ</h2><h3>จุดบริการ: ${zoneName} (${zoneId})</h3><div id="qr-container"></div><scr` + `ipt>new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 }); setTimeout(() => { window.print(); }, 500);</scr` + `ipt></body></html>`);
             printWindow.document.close();
         }
 
-        function deleteZone(zoneId) {
-            if(confirm(`คุณต้องการลบโซน ${zoneId} ใช่หรือไม่?`)) alert('ระบบลบข้อมูลจะพัฒนาในเฟส API ถัดไปครับ');
-        }
+        function deleteZone(zoneId) { if(confirm(`คุณต้องการลบโซน ${zoneId} ใช่หรือไม่?`)) alert('ระบบลบข้อมูลจะพัฒนาในเฟส API ถัดไปครับ'); }
 
+        // --- ฟังก์ชันสำหรับ Menu 2 (Dashboard & Report) ---
         let allSurveys = [];
         async function fetchSurveyData() {
             const tableBody = document.getElementById('surveyTableBody');
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย (Auto-Retry)...</td></tr>';
             try {
-                const response = await fetch(`${API_URL}?action=getSurveyResults`);
-                
-                // เช็กก่อนว่า Google ส่ง Error 500 กลับมาหรือเปล่า
-                if (!response.ok) throw new Error("เซิร์ฟเวอร์ Google ไม่ตอบสนอง (HTTP Error)");
-                
-                const text = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(text); // พยายามแปลงเป็น JSON
-                } catch(e) {
-                    throw new Error("ข้อมูลที่ได้รับไม่ใช่ JSON (เซิร์ฟเวอร์อาจจะ Timeout)");
-                }
-                
+                const result = await safeFetch(`${API_URL}?action=getSurveyResults`);
                 if (result.status === 'success') {
-                    if (currentUser.role === 'admin') {
-                        allSurveys = result.data;
-                    } else {
-                        allSurveys = result.data.filter(s => currentUser.projects.includes(s.project_id));
-                    }
-                    
+                    allSurveys = (currentUser.role === 'admin') ? result.data : result.data.filter(s => currentUser.projects.includes(s.project_id));
                     const selectProj = document.getElementById('filterProject');
                     selectProj.innerHTML = '<option value="all">-- ทุกโครงการ --</option>';
                     Array.from(document.getElementById('projectSelect').options).slice(1).forEach(opt => {
                         const newOpt = document.createElement('option'); newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectProj.appendChild(newOpt);
                     });
                     filterSurveys(); 
-                } else { 
-                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">ดึงข้อมูลล้มเหลว: ${result.message}</td></tr>`; 
-                }
-            } catch (error) { 
-                // ถ้าระบบล่ม ให้แสดงปุ่มให้ผู้ใช้กดรีเฟรชใหม่
-                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">
-                    เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ Google<br>
-                    <span style="font-size:12px; color:#666;">(${error.message})</span><br><br>
-                    <button onclick="fetchSurveyData()" style="background:#6c757d; color:white; border:none; padding:5px 15px; border-radius:4px; cursor:pointer;">ลองโหลดข้อมูลใหม่อีกครั้ง</button>
-                </td></tr>`; 
-            }
+                } else { tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
+            } catch (error) { tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว (ลอง 3 ครั้งแล้ว) โปรดกดรีเฟรช</td></tr>`; }
         }
 
         function filterSurveys() {
@@ -494,13 +463,12 @@
         async function markAsResolved(surveyId) {
             if(!confirm('ยืนยันว่าดำเนินการแก้ไขปัญหาเรียบร้อยแล้วใช่หรือไม่?')) return;
             try {
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'resolveSurvey', survey_id: surveyId, user_id: currentUser.user_id }) });
-                const result = await response.json();
+                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'resolveSurvey', survey_id: surveyId, user_id: currentUser.user_id }) });
                 if (result.status === 'success') fetchSurveyData(); else alert('Error: ' + result.message);
-            } catch (error) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+            } catch (error) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ ลองใหม่อีกครั้ง'); }
         }
 
-        // --- ระบบโหลดตารางแอดมิน (เวอร์ชันรวดเร็ว รวบยอด Request) ---
+        // --- ระบบ Menu 3 (Admin) ---
         let allGlobalProjects = []; 
         let isEditingUser = false;  
 
@@ -515,52 +483,38 @@
         async function loadAdminTables() {
             const tbodyP = document.getElementById('adminProjectTable');
             const tbodyU = document.getElementById('adminUserTable');
-            tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr>';
-            tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr>';
+            tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย...</td></tr>';
+            tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย...</td></tr>';
 
             try {
-                // 🚀 ยิง Request เดียวได้ข้อมูลครบ 3 แผ่น!
-                let res = await fetch(`${API_URL}?action=getAdminData`);
-                let result = await res.json();
-
+                let result = await safeFetch(`${API_URL}?action=getAdminData`);
                 if(result.status === 'success') {
-                    const dataP = result.data.projects;
-                    const dataU = result.data.users;
-                    const dataA = result.data.assignments;
-
-                    tbodyP.innerHTML = '';
-                    allGlobalProjects = dataP; 
-                    if (dataP.length === 0) {
-                        tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color:#666;">ยังไม่มีโครงการ</td></tr>';
-                    } else {
+                    const dataP = result.data.projects; const dataU = result.data.users; const dataA = result.data.assignments;
+                    tbodyP.innerHTML = ''; allGlobalProjects = dataP; 
+                    if (dataP.length === 0) tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color:#666;">ยังไม่มีโครงการ</td></tr>';
+                    else {
                         dataP.forEach(p => {
                             let isActive = String(p.is_active).toUpperCase() === 'TRUE';
                             let statusHtml = isActive ? `<span style="color:green;">เปิดใช้งาน</span>` : `<span style="color:red;">ปิดชั่วคราว</span>`;
-                            let btnHtml = isActive ? `<button onclick="toggleProject('${p.project_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปิดระบบ</button>` 
-                                                   : `<button onclick="toggleProject('${p.project_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">เปิดระบบ</button>`;
+                            let btnHtml = isActive ? `<button onclick="toggleProject('${p.project_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปิดระบบ</button>` : `<button onclick="toggleProject('${p.project_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">เปิดระบบ</button>`;
                             tbodyP.innerHTML += `<tr><td style="padding:10px; border-bottom: 1px solid #eee;">${p.project_id}</td><td style="padding:10px; border-bottom: 1px solid #eee;">${p.project_name} <a href="javascript:void(0)" onclick="editProjectName('${p.project_id}', '${p.project_name}')" style="font-size:11px; color:#007bff; margin-left:5px;">[เปลี่ยนชื่อ]</a></td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${statusHtml}</td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${btnHtml}</td></tr>`;
                         });
                     }
 
                     tbodyU.innerHTML = '';
-                    if (dataU.length === 0) {
-                        tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color:#666;">ยังไม่มีผู้ใช้งาน</td></tr>';
-                    } else {
+                    if (dataU.length === 0) tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color:#666;">ยังไม่มีผู้ใช้งาน</td></tr>';
+                    else {
                         dataU.forEach(u => {
                             let isActive = String(u.is_active).toUpperCase() === 'TRUE';
                             let statusHtml = isActive ? `<span style="color:green;">ปกติ</span>` : `<span style="color:red;">ถูกระงับ</span>`;
-                            let btnHtml = isActive ? `<button onclick="toggleUser('${u.user_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ระงับ</button>` 
-                                                   : `<button onclick="toggleUser('${u.user_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปลดแบน</button>`;
+                            let btnHtml = isActive ? `<button onclick="toggleUser('${u.user_id}', false)" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ระงับ</button>` : `<button onclick="toggleUser('${u.user_id}', true)" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer;">ปลดแบน</button>`;
                             let userProjs = dataA ? dataA.filter(a => String(a.user_id) === String(u.user_id)).map(a => a.project_id) : [];
                             let editBtn = `<button onclick="openUserModal(true, '${u.user_id}', '${u.name}', '${u.role}', '${userProjs.join(',')}')" style="background:#ffc107; color:#333; border:none; padding:5px 10px; border-radius:4px; font-size:12px; cursor:pointer; margin-right:5px;">✏️ แก้ไข</button>`;
                             tbodyU.innerHTML += `<tr><td style="padding:10px; border-bottom: 1px solid #eee;">${u.user_id}</td><td style="padding:10px; border-bottom: 1px solid #eee;">${u.name}<br><small style="color:#aaa;">Role: ${u.role}</small></td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${statusHtml}</td><td style="padding:10px; text-align:center; border-bottom: 1px solid #eee;">${editBtn} ${btnHtml}</td></tr>`;
                         });
                     }
                 } else { alert('ไม่สามารถดึงข้อมูลได้: ' + result.message); }
-            } catch(e) {
-                tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่</td></tr>';
-                tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่</td></tr>';
-            }
+            } catch(e) { tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดโหลดหน้าเว็บใหม่</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดโหลดหน้าเว็บใหม่</td></tr>'; }
         }
 
         function openProjectModal() { document.getElementById('modalProjName').value = ''; document.getElementById('modalProject').style.display = 'flex'; }
@@ -568,23 +522,22 @@
             const pname = document.getElementById('modalProjName').value.trim();
             if (!pname) return alert('กรุณากรอกชื่อโครงการ');
             try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname }) });
-                const result = await res.json();
+                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname }) });
                 if (result.status === 'success') { closeModals(); loadAdminTables(); fetchProjects(); } else alert(result.message);
-            } catch(e) {}
+            } catch(e) { alert("เชื่อมต่อล้มเหลว"); }
         }
 
         async function editProjectName(id, oldName) {
             let newName = prompt(`กรุณากรอกชื่อใหม่สำหรับโครงการ ${id}`, oldName);
             if(newName && newName.trim() !== '' && newName !== oldName) {
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, new_name: newName }) });
+                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, new_name: newName }) });
                 loadAdminTables(); fetchProjects();
             }
         }
 
         async function toggleProject(id, activeStatus) {
             if(confirm(`ต้องการ ${activeStatus ? 'เปิด' : 'ปิด'} โครงการ ${id} ใช่หรือไม่?`)) {
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus }) });
+                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus }) });
                 loadAdminTables(); fetchProjects();
             }
         }
@@ -597,19 +550,15 @@
             document.getElementById('modalUserTitle').innerText = isEdit ? '✏️ แก้ไขข้อมูลผู้ใช้งาน' : '👤 เพิ่มผู้ใช้งานใหม่';
             
             let assignedArr = (assignedStr || '').split(',');
-            let chkContainer = document.getElementById('modalProjectCheckboxes');
-            chkContainer.innerHTML = ''; 
+            let chkContainer = document.getElementById('modalProjectCheckboxes'); chkContainer.innerHTML = ''; 
             
             if (allGlobalProjects && allGlobalProjects.length > 0) {
                 allGlobalProjects.forEach(p => {
                     let isChecked = assignedArr.includes(p.project_id) ? 'checked' : '';
                     chkContainer.innerHTML += `<label><input type="checkbox" class="proj-checkbox" value="${p.project_id}" ${isChecked}> ${p.project_name}</label>`;
                 });
-            } else {
-                chkContainer.innerHTML = '<span style="color:#888; font-size:12px;">ไม่พบข้อมูลโครงการในระบบ หรือกำลังโหลดข้อมูล</span>';
-            }
-            toggleProjectSelection(); 
-            document.getElementById('modalUser').style.display = 'flex';
+            } else { chkContainer.innerHTML = '<span style="color:#888; font-size:12px;">ไม่พบข้อมูลโครงการในระบบ หรือกำลังโหลดข้อมูล</span>'; }
+            toggleProjectSelection(); document.getElementById('modalUser').style.display = 'flex';
         }
 
         function toggleProjectSelection() {
@@ -624,18 +573,13 @@
             const pwd = document.getElementById('modalUserPwd').value.trim();
             const role = document.getElementById('modalUserRole').value;
             let selectedProjs = [];
-            
             if (role !== 'admin') document.querySelectorAll('.proj-checkbox:checked').forEach(cb => selectedProjs.push(cb.value));
             if (!uid || !name) return alert('กรุณากรอกรหัสและชื่อผู้ใช้งาน');
             if (!isEditingUser && !pwd) return alert('กรุณาตั้งรหัสผ่านสำหรับผู้ใช้ใหม่');
 
-            let payload = isEditingUser 
-                ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } 
-                : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; 
-
+            let payload = isEditingUser ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; 
             try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
+                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 if(result.status === 'success') { closeModals(); loadAdminTables(); } else alert(result.message);
             } catch(e) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
         }
@@ -643,43 +587,30 @@
         async function toggleUser(id, activeStatus) {
             if(id === currentUser.user_id) return alert('ไม่สามารถระงับบัญชีตัวเองได้ครับ');
             if(confirm(`ต้องการ ${activeStatus ? 'ปลดระงับ' : 'ระงับบัญชี'} ${id} ใช่หรือไม่?`)) {
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUser', user_id: id, is_active: activeStatus }) });
+                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUser', user_id: id, is_active: activeStatus }) });
                 loadAdminTables();
             }
         }
 
-        // --- ระบบ Menu 4 (Logs) ดึงข้อมูล log.detail ---
+        // --- ระบบ Menu 4 (Logs) ---
         async function fetchLogs() {
             const tbody = document.getElementById('logsTableBody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังดึงข้อมูลอย่างปลอดภัย...</td></tr>';
             try {
-                const response = await fetch(`${API_URL}?action=getLogs`);
-                const result = await response.json();
+                const result = await safeFetch(`${API_URL}?action=getLogs`);
                 if (result.status === 'success') {
                     let allowedLogs = result.data;
                     if (currentUser.role !== 'admin') allowedLogs = result.data.filter(log => currentUser.projects.includes(log.project_id));
-                    if (allowedLogs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีประวัติการทำงาน</td></tr>';
-                        return;
-                    }
+                    if (allowedLogs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีประวัติการทำงาน</td></tr>'; return; }
                     tbody.innerHTML = '';
                     allowedLogs.forEach(log => {
-                        const tr = document.createElement('tr');
-                        tr.style.borderBottom = "1px solid #eee";
-                        const d = new Date(log.timestamp);
-                        const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                        
-                        tr.innerHTML = `
-                            <td style="padding: 10px;">${dateStr}</td>
-                            <td style="padding: 10px; color:#007bff; font-weight:bold;">${log.user_id}</td>
-                            <td style="padding: 10px;">${log.project_id || '-'}</td>
-                            <td style="padding: 10px;"><span style="background:#e2e3e5; padding:3px 8px; border-radius:12px; font-size:12px;">${log.action}</span></td>
-                            <td style="padding: 10px; color:#555;">${log.detail}</td> 
-                        `;
+                        const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
+                        const d = new Date(log.timestamp); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+                        tr.innerHTML = `<td style="padding: 10px;">${dateStr}</td><td style="padding: 10px; color:#007bff; font-weight:bold;">${log.user_id}</td><td style="padding: 10px;">${log.project_id || '-'}</td><td style="padding: 10px;"><span style="background:#e2e3e5; padding:3px 8px; border-radius:12px; font-size:12px;">${log.action}</span></td><td style="padding: 10px; color:#555;">${log.detail}</td>`;
                         tbody.appendChild(tr);
                     });
                 } else { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
-            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">เกิดข้อผิดพลาดในการดึงข้อมูล Logs</td></tr>'; }
+            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดกดรีเฟรชใหม่</td></tr>'; }
         }
     </script>
 </body>
