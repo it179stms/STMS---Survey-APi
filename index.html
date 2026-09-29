@@ -303,6 +303,12 @@
                 <option value="staff">เจ้าหน้าที่ทั่วไป (Staff)</option>
                 <option value="admin">ผู้ดูแลระบบ (Admin)</option>
             </select>
+            <div id="projectAssignmentSection" style="margin-top: 15px;">
+                <strong>🔗 กำหนดสิทธิ์โครงการ</strong>
+                <div id="modalProjectCheckboxes" class="checkbox-group">
+                    <!-- Checkbox จะถูกวาดด้วย JS -->
+                </div>
+            </div>
             
             <div style="margin-top: 15px;">
                 <strong>🔗 กำหนดสิทธิ์โครงการ</strong>
@@ -774,9 +780,21 @@
                 chkContainer.innerHTML += `<label><input type="checkbox" class="proj-checkbox" value="${p.project_id}" ${isChecked}> ${p.project_name}</label>`;
             });
 
+            toggleProjectSelection();
+            
             document.getElementById('modalUser').style.display = 'flex';
         }
 
+        function toggleProjectSelection() {
+            const role = document.getElementById('modalUserRole').value;
+            const section = document.getElementById('projectAssignmentSection');
+            if (role === 'admin') {
+                section.style.display = 'none'; // ซ่อนถ้าเป็น Admin
+            } else {
+                section.style.display = 'block'; // โชว์ถ้าเป็น Staff
+            }
+        }
+        
         async function submitUserModal() {
             const uid = document.getElementById('modalUserId').value.trim();
             const name = document.getElementById('modalUserName').value.trim();
