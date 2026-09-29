@@ -283,7 +283,7 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
-        // --- ระบบสลับเมนู (SPA Routing) ---
+// --- ระบบสลับเมนู (SPA Routing) ---
         function switchMenu(targetMenuId) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
@@ -291,10 +291,13 @@
             document.getElementById(targetMenuId).classList.add('active');
             event.target.classList.add('active');
             
-            // ถ้าย้ายมา Menu 1 ให้โหลดตารางใหม่
+            // โหลดข้อมูลตามเมนูที่กด
             if (targetMenuId === 'menu1') fetchZoneList();
             if (targetMenuId === 'menu2') fetchSurveyData();
-            if (targetMenuId === 'menu3') updateAssignProjectDropdown();
+            if (targetMenuId === 'menu3') {
+                updateAssignProjectDropdown(); // โหลด Dropdown
+                loadAdminTables();             // 👈 โหลดตาราง! (น่าจะตกหล่นบรรทัดนี้ไปครับ)
+            }
         }
 
         // --- ระบบ Login & Setup ---
