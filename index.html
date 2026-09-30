@@ -170,7 +170,7 @@
                 </div>
                 <div class="card" style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                        <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">รหัสพนักงาน</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">การกระทำ (Action)</th><th style="padding: 10px;">รายละเอียด</th></tr></thead>
+                        <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">ผู้ทำรายการ</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">การกระทำ (Action)</th><th style="padding: 10px;">รายละเอียด</th></tr></thead>
                         <tbody id="logsTableBody"><tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
                     </table>
                 </div>
@@ -210,8 +210,8 @@
         </div>
     </div>
 
-    <script>
-        // ⚠️️ Web App URL ของคุณ (ไม่ต้องแก้ ผมเว้นให้แล้ว)
+<script>
+        // ⚠️ Web App URL ของคุณ
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
@@ -230,7 +230,6 @@
             }
         }
 
-        // 🛠️ แก้ไขบั๊กจอดำ: เปลี่ยนวิธีเพิ่มแถบสี (active) ให้ปลอดภัยขึ้น
         function switchMenu(targetMenuId) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
@@ -256,7 +255,6 @@
             finally { btn.innerText = 'เข้าสู่ระบบ'; btn.disabled = false; }
         }
 
-        // 🛠️ แก้ไขบั๊กหน้าค้างซ้ำซ้อน: จัดการให้โหลดเฉพาะหน้าแรกอย่างถูกต้อง
         function setupApp() {
             document.getElementById('loginSection').style.display = 'none'; 
             document.getElementById('mainApp').style.display = 'flex'; 
@@ -265,7 +263,6 @@
             
             document.getElementById('navMenu3').style.display = (currentUser.role === 'admin') ? 'block' : 'none';
             
-            // บังคับสลับกลับมาที่หน้าจอแรกโดยตรง (ลดการยิง API ซ้ำซ้อน)
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             document.getElementById('menu1').classList.add('active'); 
@@ -310,7 +307,8 @@
             if (!zoneName) return alert("กรุณาระบุชื่อพื้นที่");
             const btn = document.getElementById('btnCreateQR'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
             try {
-                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName }) });
+                // 🚀 แนบ actor_id ไปด้วย
+                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName, actor_id: currentUser.user_id }) });
                 if(result.status === 'success') {
                     const surveyUrl = `https://stms-survey-a-pi.vercel.app/survey?zone=${result.new_zone_id}`;
                     document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${result.new_zone_id})`; document.getElementById('qrLink').value = surveyUrl;
@@ -448,7 +446,8 @@
             if (!pname) return alert('กรุณากรอกชื่อโครงการ');
             const btn = document.getElementById('btnSaveProject'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; 
             try {
-                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname }) });
+                // 🚀 แนบ actor_id ไปด้วย
+                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname, actor_id: currentUser.user_id }) });
                 if (result.status === 'success') { closeModals(); loadAdminTables(); fetchProjects(); } else alert(result.message);
             } catch(e) { alert("เชื่อมต่อล้มเหลว"); } finally { btn.innerText = "บันทึกโครงการ"; btn.disabled = false; }
         }
@@ -456,13 +455,15 @@
         async function editProjectName(id, oldName) {
             let newName = prompt(`กรุณากรอกชื่อใหม่สำหรับโครงการ ${id}`, oldName);
             if(newName && newName.trim() !== '' && newName !== oldName) {
-                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, new_name: newName }) });
+                // 🚀 แนบ actor_id ไปด้วย
+                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, new_name: newName, actor_id: currentUser.user_id }) });
                 loadAdminTables(); fetchProjects();
             }
         }
         async function toggleProject(id, activeStatus) {
             if(confirm(`ต้องการ ${activeStatus ? 'เปิด' : 'ปิด'} โครงการ ${id} ใช่หรือไม่?`)) {
-                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus }) });
+                // 🚀 แนบ actor_id ไปด้วย
+                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus, actor_id: currentUser.user_id }) });
                 loadAdminTables(); fetchProjects();
             }
         }
@@ -501,7 +502,12 @@
             if (!isEditingUser && !pwd) return alert('กรุณาตั้งรหัสผ่านสำหรับผู้ใช้ใหม่');
 
             const btn = document.getElementById('btnSaveUser'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; 
-            let payload = isEditingUser ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; 
+            
+            // 🚀 แนบ actor_id เข้าไปใน payload ด้วย
+            let payload = isEditingUser 
+                ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs, actor_id: currentUser.user_id } 
+                : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs, actor_id: currentUser.user_id }; 
+                
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 if(result.status === 'success') { closeModals(); loadAdminTables(); } else alert(result.message);
@@ -511,33 +517,11 @@
         async function toggleUser(id, activeStatus) {
             if(id === currentUser.user_id) return alert('ไม่สามารถระงับบัญชีตัวเองได้ครับ');
             if(confirm(`ต้องการ ${activeStatus ? 'ปลดระงับ' : 'ระงับบัญชี'} ${id} ใช่หรือไม่?`)) {
-                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUser', user_id: id, is_active: activeStatus }) });
+                // 🚀 แนบ actor_id ไปด้วย
+                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUser', user_id: id, is_active: activeStatus, actor_id: currentUser.user_id }) });
                 loadAdminTables();
             }
         }
-
-        // --- Menu 4 (Logs) ---
-        /*async function fetchLogs() {
-            const tbody = document.getElementById('logsTableBody');
-            const btn = document.getElementById('btnRefreshLogs'); btn.innerText = "กำลังรีเฟรช..."; btn.disabled = true;
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>';
-            try {
-                const result = await safeFetch(`${API_URL}?action=getLogs`);
-                if (result.status === 'success') {
-                    let allowedLogs = result.data;
-                    if (currentUser.role !== 'admin') allowedLogs = result.data.filter(log => currentUser.projects.includes(log.project_id));
-                    if (allowedLogs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีประวัติการทำงาน</td></tr>'; return; }
-                    tbody.innerHTML = '';
-                    allowedLogs.forEach(log => {
-                        const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
-                        const d = new Date(log.timestamp); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                        tr.innerHTML = `<td style="padding: 10px;">${dateStr}</td><td style="padding: 10px; color:#007bff; font-weight:bold;">${log.user_id}</td><td style="padding: 10px;">${log.project_id || '-'}</td><td style="padding: 10px;"><span style="background:#e2e3e5; padding:3px 8px; border-radius:12px; font-size:12px;">${log.action}</span></td><td style="padding: 10px; color:#555;">${log.detail}</td>`;
-                        tbody.appendChild(tr);
-                    });
-                } else { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
-            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดกดรีเฟรชใหม่</td></tr>'; }
-            finally { btn.innerText = "🔄 รีเฟรชข้อมูล"; btn.disabled = false; }
-        }*/
 
         // --- Menu 4 (Logs) ---
         async function fetchLogs() {
@@ -547,9 +531,7 @@
             try {
                 const result = await safeFetch(`${API_URL}?action=getLogs`);
                 if (result.status === 'success') {
-                    // 🚀 ปลดล็อกให้แสดง Logs ทั้งหมด โดยไม่กรองสิทธิ์โปรเจกต์
-                    let allowedLogs = result.data; 
-                    
+                    let allowedLogs = result.data;
                     if (allowedLogs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีประวัติการทำงาน</td></tr>'; return; }
                     tbody.innerHTML = '';
                     allowedLogs.forEach(log => {
