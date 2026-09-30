@@ -56,12 +56,10 @@
             .mobile-header { display: flex; }
             .mobile-close-btn { display: block; }
             
-            /* ซ่อน Sidebar และทำเป็นแอนิเมชันสไลด์จากด้านซ้าย */
             .sidebar { position: fixed; top: 0; left: -280px; height: 100vh; z-index: 2000; transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
             .sidebar.open { left: 0; }
             .sidebar-overlay.active { display: block; }
             
-            /* ปรับหน้าต่างให้พอดีมือถือ */
             .content-area { padding: 15px; padding-bottom: 120px; height: calc(100vh - 60px); }
             .card { padding: 15px; }
             .tab-header { flex-direction: column; gap: 5px; }
@@ -69,18 +67,15 @@
             .tab-btn.active { border-bottom: 3px solid #007bff; }
             h2 { font-size: 20px; }
             
-            /* ลดขนาดตารางให้เลื่อนง่ายขึ้น */
             th, td { padding: 8px 5px !important; font-size: 13px !important; }
             .btn-primary { width: 100% !important; margin-top: 10px; }
             
-            /* ให้ปุ่มและฟิลเตอร์ตกลงมาบรรทัดใหม่ */
             #menu2 .card > div:first-child { flex-direction: column; align-items: stretch; gap: 10px; }
             #menu2 .card > div:first-child button { margin-left: 0; width: 100%; }
         }
     </style>
 </head>
 <body>
-    <!-- หน้าต่าง Login -->
     <div id="loginSection">
         <div class="login-box">
             <h2>QR Survey</h2><p style="color: #666; margin-bottom:20px; font-size:14px;">กรุณาเข้าสู่ระบบ</p>
@@ -91,13 +86,10 @@
         </div>
     </div>
 
-    <!-- หน้าต่างระบบหลัก -->
     <div id="mainApp" style="display: none; width: 100%; height: 100vh; flex-direction: row; overflow: hidden;">
         
-        <!-- แถบดำ Overlay (แสดงเฉพาะมือถือเวลากดเปิดเมนู) -->
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileMenu()"></div>
         
-        <!-- เมนูด้านซ้าย -->
         <div class="sidebar" id="appSidebar">
             <div class="sidebar-header">
                 <h3 style="margin:0; display:inline-block;">QR Survey</h3>
@@ -115,10 +107,8 @@
             </div>
         </div>
 
-        <!-- พื้นที่แสดงเนื้อหาหลัก -->
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%;">
             
-            <!-- 📱 แถบหัวด้านบนสำหรับมือถือ -->
             <div class="mobile-header">
                 <h3 style="margin:0; font-size: 18px;">QR Survey - Admin</h3>
                 <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
@@ -271,9 +261,44 @@
     </div>
 
     <script>
-        // ⚠️ Web App URL เดิม
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
+
+        // 🚀 ระบบจัดการ Session Timeout (30 นาที)
+        const SESSION_TIMEOUT = 30 * 60 * 1000; 
+        let inactivityTimer;
+
+        function resetTimer() {
+            if (!currentUser) return; 
+            clearTimeout(inactivityTimer);
+            localStorage.setItem('stms_last_activity', Date.now().toString()); 
+            
+            inactivityTimer = setTimeout(() => {
+                alert("⏳ เซสชันหมดอายุเนื่องจากไม่มีการใช้งานเกิน 30 นาที กรุณาเข้าสู่ระบบใหม่");
+                logout();
+            }, SESSION_TIMEOUT);
+        }
+
+        // แอบจับความเคลื่อนไหวของผู้ใช้เพื่อรีเซ็ตเวลา
+        ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => 
+            document.addEventListener(evt, resetTimer, true)
+        );
+
+        // 🚀 โหลดหน้าเว็บแล้วเช็กข้อมูล Login ทันที
+        window.addEventListener('load', () => {
+            const savedUser = localStorage.getItem('stms_user');
+            const lastActivity = localStorage.getItem('stms_last_activity');
+            
+            if (savedUser && lastActivity) {
+                if (Date.now() - parseInt(lastActivity) < SESSION_TIMEOUT) {
+                    currentUser = JSON.parse(savedUser);
+                    setupApp();
+                } else {
+                    localStorage.removeItem('stms_user');
+                    localStorage.removeItem('stms_last_activity');
+                }
+            }
+        });
 
         async function safeFetch(url, options = {}) {
             let retries = 3; let delay = 1000;
@@ -290,7 +315,6 @@
             }
         }
         
-        // 📱 ฟังก์ชันเปิด-ปิดเมนูบนมือถือ
         function toggleMobileMenu() {
             const sidebar = document.getElementById('appSidebar');
             const overlay = document.getElementById('sidebarOverlay');
@@ -306,7 +330,6 @@
             const activeBtn = document.querySelector(`.menu-item[onclick*="${targetMenuId}"]`);
             if (activeBtn) activeBtn.classList.add('active');
             
-            // 📱 ปิด Sidebar อัตโนมัติบนมือถือเมื่อเลือกเมนูเสร็จ
             if (window.innerWidth <= 768) {
                 const sidebar = document.getElementById('appSidebar');
                 if (sidebar.classList.contains('open')) toggleMobileMenu();
@@ -324,7 +347,15 @@
             errorMsg.style.display = 'none'; btn.innerText = 'กำลังตรวจสอบ...'; btn.disabled = true;
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', user_id: uid, password: pwd }) });
-                if (result.status === 'success') { currentUser = result.user; setupApp(); } else { errorMsg.innerText = result.message; errorMsg.style.display = 'block'; }
+                if (result.status === 'success') { 
+                    currentUser = result.user; 
+                    
+                    // 🚀 บันทึกการล็อกอินลง localStorage
+                    localStorage.setItem('stms_user', JSON.stringify(currentUser));
+                    localStorage.setItem('stms_last_activity', Date.now().toString());
+                    
+                    setupApp(); 
+                } else { errorMsg.innerText = result.message; errorMsg.style.display = 'block'; }
             } catch (err) { errorMsg.innerText = "ไม่สามารถเข้าสู่ระบบได้ โปรดตรวจสอบอินเทอร์เน็ต"; errorMsg.style.display = 'block'; } 
             finally { btn.innerText = 'เข้าสู่ระบบ'; btn.disabled = false; }
         }
@@ -343,10 +374,16 @@
             document.querySelector('.menu-item[onclick*="menu1"]').classList.add('active');
             
             fetchProjects();
+            
+            resetTimer(); // 🚀 เริ่มจับเวลา Session ใหม่
         }
 
         function logout() { 
             currentUser = null; 
+            clearTimeout(inactivityTimer); // 🚀 ยกเลิกการจับเวลา
+            localStorage.removeItem('stms_user');
+            localStorage.removeItem('stms_last_activity');
+            
             document.getElementById('loginSection').style.display = 'flex'; 
             document.getElementById('mainApp').style.display = 'none'; 
             document.getElementById('userId').value = ''; 
@@ -415,7 +452,7 @@
                             <td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td>
                             <td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td>
                             <td style="padding: 10px; text-align: center;">
-                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️</button>
+                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️️</button>
                                 <button onclick="copyToClipboard('${surveyUrl}')" style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔗</button>
                                 <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️</button>
                             </td>`;
@@ -605,7 +642,6 @@
                 loadAdminTables(); fetchProjects();
             }
         }
-        
         async function toggleProject(id, activeStatus) {
             if(confirm(`ต้องการ ${activeStatus ? 'เปิด' : 'ปิด'} โครงการ ${id} ใช่หรือไม่?`)) {
                 await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus, actor_id: currentUser.user_id }) });
@@ -614,7 +650,7 @@
         }
         
         async function deleteProject(id) {
-            if (confirm(`⚠️️ ยืนยันการลบโครงการ ${id} อย่างถาวรใช่หรือไม่?\n\n🚨 คำเตือน: โซนพื้นที่ (QR Code) และสิทธิ์ของพนักงานทั้งหมดที่ผูกกับโครงการนี้จะถูกลบทิ้งไปด้วย และไม่สามารถกู้คืนได้!`)) {
+            if (confirm(`⚠ ยืนยันการลบโครงการ ${id} อย่างถาวรใช่หรือไม่?\n\n🚨 คำเตือน: โซนพื้นที่ (QR Code) และสิทธิ์ของพนักงานทั้งหมดที่ผูกกับโครงการนี้จะถูกลบทิ้งไปด้วย และไม่สามารถกู้คืนได้!`)) {
                 try {
                     const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteProject', project_id: id, actor_id: currentUser.user_id }) });
                     if (result.status === 'success') { loadAdminTables(); fetchProjects(); } else alert('Error: ' + result.message);
