@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>STMS - QR Survey - Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Niramit:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -10,26 +10,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'LINE Seed Sans TH', 'Roboto', sans-serif; background: #f4f7f6; margin: 0; padding: 0; color: #333; display: flex; height: 100vh; overflow: hidden; }
-        #loginSection { width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background: #f4f7f6; }
+        #loginSection { width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background: #f4f7f6; padding: 20px; box-sizing: border-box; }
         .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .login-box button { background: #007bff; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-family: inherit; margin-top: 10px; }
         .login-box button:disabled { background: #999; cursor: not-allowed; }
-        #mainApp { display: none; width: 100%; height: 100%; display: flex; } 
-        .sidebar { width: 260px; background: #2c3e50; color: white; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #34495e; }
+        
+        .sidebar { width: 260px; background: #2c3e50; color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #34495e; position: relative; }
         .menu-list { flex: 1; padding: 10px 0; overflow-y: auto; }
         .menu-item { padding: 15px 25px; cursor: pointer; transition: background 0.2s; border-left: 4px solid transparent; }
         .menu-item:hover { background: #34495e; }
         .menu-item.active { background: #007bff; border-left: 4px solid #66b0ff; font-weight: 600; }
         .user-info { padding: 20px; border-top: 1px solid #34495e; font-size: 14px; text-align: center; }
-        .btn-logout { background: #dc3545; color: white; border: none; padding: 8px; width: 100%; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .btn-logout { background: #dc3545; color: white; border: none; padding: 8px; width: 100%; border-radius: 6px; cursor: pointer; margin-top: 10px; font-family: inherit; }
+        
         .content-area { flex: 1; padding: 30px; overflow-y: auto; background: #f4f7f6; }
         .content-section { display: none; } 
         .content-section.active { display: block; } 
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px; }
         h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
-        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 16px; }
         .btn-primary { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: inherit;}
         .btn-primary:disabled { background: #999; cursor: not-allowed; }
         .tab-header { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
@@ -37,15 +38,49 @@
         .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; margin-bottom: -2px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        
+        .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 450px; position: relative; }
         .close-btn { position: absolute; right: 20px; top: 20px; font-size: 20px; cursor: pointer; color: #888; border:none; background:none;}
         .close-btn:hover { color: red; }
         .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; max-height: 150px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
         .checkbox-group label { display: flex; align-items: center; font-size: 14px; gap: 5px; cursor: pointer; margin: 0; }
+
+        /* 📱 Mobile Responsive Styles */
+        .mobile-header { display: none; background: #2c3e50; color: white; padding: 15px 20px; align-items: center; justify-content: space-between; }
+        .menu-toggle { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0; margin: 0; }
+        .mobile-close-btn { display: none; background: none; border: none; color: white; font-size: 20px; cursor: pointer; position: absolute; right: 15px; top: 20px; }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; }
+        
+        @media (max-width: 768px) {
+            .mobile-header { display: flex; }
+            .mobile-close-btn { display: block; }
+            
+            /* ซ่อน Sidebar และทำเป็นแอนิเมชันสไลด์จากด้านซ้าย */
+            .sidebar { position: fixed; top: 0; left: -280px; height: 100vh; z-index: 2000; transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
+            .sidebar.open { left: 0; }
+            .sidebar-overlay.active { display: block; }
+            
+            /* ปรับหน้าต่างให้พอดีมือถือ */
+            .content-area { padding: 15px; height: calc(100vh - 60px); }
+            .card { padding: 15px; }
+            .tab-header { flex-direction: column; gap: 5px; }
+            .tab-btn { text-align: center; border-bottom: 2px solid #eee; margin:0; padding:10px; width: 100%; }
+            .tab-btn.active { border-bottom: 3px solid #007bff; }
+            h2 { font-size: 20px; }
+            
+            /* ลดขนาดตารางให้เลื่อนง่ายขึ้น */
+            th, td { padding: 8px 5px !important; font-size: 13px !important; }
+            .btn-primary { width: 100% !important; margin-top: 10px; }
+            
+            /* ให้ปุ่มและฟิลเตอร์ตกลงมาบรรทัดใหม่ */
+            #menu2 .card > div:first-child { flex-direction: column; align-items: stretch; gap: 10px; }
+            #menu2 .card > div:first-child button { margin-left: 0; width: 100%; }
+        }
     </style>
 </head>
 <body>
+    <!-- หน้าต่าง Login -->
     <div id="loginSection">
         <div class="login-box">
             <h2>QR Survey</h2><p style="color: #666; margin-bottom:20px; font-size:14px;">กรุณาเข้าสู่ระบบ</p>
@@ -56,9 +91,18 @@
         </div>
     </div>
 
-    <div id="mainApp" style="display: none;">
-        <div class="sidebar">
-            <div class="sidebar-header"><h3>QR Survey</h3></div>
+    <!-- หน้าต่างระบบหลัก -->
+    <div id="mainApp" style="display: none; width: 100%; height: 100vh; flex-direction: row; overflow: hidden;">
+        
+        <!-- แถบดำ Overlay (แสดงเฉพาะมือถือเวลากดเปิดเมนู) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileMenu()"></div>
+        
+        <!-- เมนูด้านซ้าย -->
+        <div class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <h3 style="margin:0; display:inline-block;">QR Survey</h3>
+                <button class="mobile-close-btn" onclick="toggleMobileMenu()">✖</button>
+            </div>
             <div class="menu-list">
                 <div class="menu-item active" onclick="switchMenu('menu1')">📱 จัดการ QR แบบประเมิน</div>
                 <div class="menu-item" onclick="switchMenu('menu2')">📊 Dashboard & Report</div>
@@ -71,110 +115,124 @@
             </div>
         </div>
 
-        <div class="content-area">
-            <!-- Menu 1 -->
-            <div id="menu1" class="content-section active">
-                <h2>จัดการ QR แบบประเมิน</h2>
-                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <div class="card" style="flex: 1; min-width: 300px;">
-                        <h3>สร้าง QR Code พื้นที่ใหม่</h3>
-                        <select id="projectSelect" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
-                        <div id="zoneCreator" style="display: none; margin-top: 15px;">
-                            <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
-                            <button id="btnCreateQR" class="btn-primary" onclick="generateQR()" style="width: 100%; margin-top: 10px;">+ สร้าง QR Code</button>
-                        </div>
-                        <div id="qrResult" style="display: none; margin-top: 20px; text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 8px;">
-                            <h4 id="qrTitle" style="margin-top:0;"></h4><div id="qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
-                            <input type="text" id="qrLink" readonly style="background:#f4f4f4; text-align:center;">
-                            <button onclick="copyLink()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; margin-top:10px;">คัดลอก Link</button>
-                        </div>
-                    </div>
-                    <div class="card" style="flex: 2; min-width: 400px; max-height: 70vh; overflow-y: auto;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3>รายการโซนและ QR Code</h3><button onclick="fetchZoneList()" style="background:none; border:1px solid #ccc; padding:5px 10px; border-radius:4px; cursor:pointer;">🔄 รีเฟรช</button>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">รหัสโซน</th><th style="padding: 10px;">ชื่อพื้นที่</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
-                            <tbody id="zoneTableBody"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- พื้นที่แสดงเนื้อหาหลัก -->
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%;">
+            
+            <!-- 📱 แถบหัวด้านบนสำหรับมือถือ -->
+            <div class="mobile-header">
+                <h3 style="margin:0; font-size: 18px;">QR Survey - Admin</h3>
+                <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
             </div>
 
-            <!-- Menu 2 -->
-            <div id="menu2" class="content-section">
-                <h2>Dashboard & รายการประเมิน</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
-                    <div class="card" style="text-align: center; margin-bottom: 0;">
-                        <h4 style="margin:0; color:#666;">จำนวนประเมินทั้งหมด</h4><h2 id="dashTotal" style="margin:10px 0; color:#007bff; font-size: 32px; border:none;">0</h2>
-                    </div>
-                    <div class="card" style="text-align: center; margin-bottom: 0;">
-                        <h4 style="margin:0; color:#666;">คะแนนเฉลี่ย</h4><h2 id="dashAvg" style="margin:10px 0; color:#28a745; font-size: 32px; border:none;">0.0</h2>
-                    </div>
-                    <div class="card" style="text-align: center; margin-bottom: 0;">
-                        <h4 style="margin:0; color:#666;">รอดำเนินการ (Pending)</h4><h2 id="dashPending" style="margin:10px 0; color:#dc3545; font-size: 32px; border:none;">0</h2>
+            <div class="content-area">
+                <!-- Menu 1 -->
+                <div id="menu1" class="content-section active">
+                    <h2>จัดการ QR แบบประเมิน</h2>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div class="card" style="flex: 1; min-width: 300px;">
+                            <h3>สร้าง QR Code พื้นที่ใหม่</h3>
+                            <select id="projectSelect" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
+                            <div id="zoneCreator" style="display: none; margin-top: 15px;">
+                                <input type="text" id="zoneName" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
+                                <button id="btnCreateQR" class="btn-primary" onclick="generateQR()" style="width: 100%; margin-top: 10px;">+ สร้าง QR Code</button>
+                            </div>
+                            <div id="qrResult" style="display: none; margin-top: 20px; text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 8px;">
+                                <h4 id="qrTitle" style="margin-top:0;"></h4><div id="qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
+                                <input type="text" id="qrLink" readonly style="background:#f4f4f4; text-align:center;">
+                                <button onclick="copyLink()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; margin-top:10px;">คัดลอก Link</button>
+                            </div>
+                        </div>
+                        <div class="card" style="flex: 2; min-width: 100%; max-height: 70vh; overflow-y: auto;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>รายการโซนและ QR Code</h3><button onclick="fetchZoneList()" style="background:none; border:1px solid #ccc; padding:5px 10px; border-radius:4px; cursor:pointer;">🔄 รีเฟรช</button>
+                            </div>
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; font-size: 14px; min-width: 500px;">
+                                    <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">รหัสโซน</th><th style="padding: 10px;">ชื่อพื้นที่</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
+                                    <tbody id="zoneTableBody"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
-                        <strong style="min-width: 60px;">ตัวกรอง:</strong>
-                        <select id="filterProject" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกโครงการ --</option></select>
-                        <select id="filterRating" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกระดับคะแนน --</option><option value="5">5 ดาว (ดีมาก)</option><option value="4">4 ดาว (ดี)</option><option value="3">3 ดาว (ปานกลาง)</option><option value="2">2 ดาว (พอใช้)</option><option value="1">1 ดาว (ปรับปรุง)</option></select>
-                        <select id="filterStatus" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกสถานะ --</option><option value="pending">รอดำเนินการ</option><option value="resolved">แก้ไขแล้ว</option></select>
-                        <button onclick="fetchSurveyData()" style="background:#6c757d; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรช</button>
-                        <button onclick="printDashboardReport()" style="background:#17a2b8; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">🖨️ พิมพ์รายงาน</button>
-                        <button onclick="exportDashboardCSV()" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">📊 Export CSV</button>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">พื้นที่ (โซน)</th><th style="padding: 10px; text-align: center;">คะแนน</th><th style="padding: 10px;">ข้อเสนอแนะ</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
-                            <tbody id="surveyTableBody"><tr><td colspan="7" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Menu 3 -->
-            <div id="menu3" class="content-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><h2>User & Project Management (เฉพาะแอดมิน)</h2></div>
-                <div class="tab-header">
-                    <button class="tab-btn active" onclick="switchAdminTab('tab-users')">👥 จัดการผู้ใช้งาน (Users)</button>
-                    <button class="tab-btn" onclick="switchAdminTab('tab-projects')">🏢 จัดการโครงการ (Projects)</button>
+                <!-- Menu 2 -->
+                <div id="menu2" class="content-section">
+                    <h2>Dashboard & รายการประเมิน</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div class="card" style="text-align: center; margin-bottom: 0;">
+                            <h4 style="margin:0; color:#666;">จำนวนประเมินทั้งหมด</h4><h2 id="dashTotal" style="margin:10px 0; color:#007bff; font-size: 32px; border:none;">0</h2>
+                        </div>
+                        <div class="card" style="text-align: center; margin-bottom: 0;">
+                            <h4 style="margin:0; color:#666;">คะแนนเฉลี่ย</h4><h2 id="dashAvg" style="margin:10px 0; color:#28a745; font-size: 32px; border:none;">0.0</h2>
+                        </div>
+                        <div class="card" style="text-align: center; margin-bottom: 0;">
+                            <h4 style="margin:0; color:#666;">รอดำเนินการ (Pending)</h4><h2 id="dashPending" style="margin:10px 0; color:#dc3545; font-size: 32px; border:none;">0</h2>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+                            <strong style="min-width: 60px;">ตัวกรอง:</strong>
+                            <select id="filterProject" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกโครงการ --</option></select>
+                            <select id="filterRating" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกระดับคะแนน --</option><option value="5">5 ดาว (ดีมาก)</option><option value="4">4 ดาว (ดี)</option><option value="3">3 ดาว (ปานกลาง)</option><option value="2">2 ดาว (พอใช้)</option><option value="1">1 ดาว (ปรับปรุง)</option></select>
+                            <select id="filterStatus" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกสถานะ --</option><option value="pending">รอดำเนินการ</option><option value="resolved">แก้ไขแล้ว</option></select>
+                            <button onclick="fetchSurveyData()" style="background:#6c757d; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรช</button>
+                            <button onclick="printDashboardReport()" style="background:#17a2b8; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">🖨️ พิมพ์รายงาน</button>
+                            <button onclick="exportDashboardCSV()" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">📊 Export CSV</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px;">
+                                <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">พื้นที่ (โซน)</th><th style="padding: 10px; text-align: center;">คะแนน</th><th style="padding: 10px;">ข้อเสนอแนะ</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
+                                <tbody id="surveyTableBody"><tr><td colspan="7" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div id="tab-users" class="tab-content active card">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
-                        <h3 style="margin:0;">รายชื่อผู้ใช้งานทั้งหมด</h3><button onclick="openUserModal()" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มผู้ใช้งานใหม่</button>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">User ID</th><th style="padding: 10px;">ชื่อพนักงาน</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr></thead>
-                            <tbody id="adminUserTable"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div id="tab-projects" class="tab-content card">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
-                        <h3 style="margin:0;">รายชื่อโครงการทั้งหมด</h3><button onclick="openProjectModal()" style="background:#007bff; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มโครงการใหม่</button>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">รหัส</th><th style="padding: 10px;">ชื่อโครงการ</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr></thead>
-                            <tbody id="adminProjectTable"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Menu 4 -->
-            <div id="menu4" class="content-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2>Logs ประวัติการทำงาน</h2><button id="btnRefreshLogs" onclick="fetchLogs()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรชข้อมูล</button>
+                <!-- Menu 3 -->
+                <div id="menu3" class="content-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"><h2>User & Project Management (เฉพาะแอดมิน)</h2></div>
+                    <div class="tab-header">
+                        <button class="tab-btn active" onclick="switchAdminTab('tab-users')">👥 จัดการผู้ใช้งาน (Users)</button>
+                        <button class="tab-btn" onclick="switchAdminTab('tab-projects')">🏢 จัดการโครงการ (Projects)</button>
+                    </div>
+                    
+                    <div id="tab-users" class="tab-content active card">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+                            <h3 style="margin:0;">รายชื่อผู้ใช้งานทั้งหมด</h3><button onclick="openUserModal()" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มผู้ใช้งานใหม่</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 600px;">
+                                <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">User ID</th><th style="padding: 10px;">ชื่อพนักงาน</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr></thead>
+                                <tbody id="adminUserTable"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div id="tab-projects" class="tab-content card">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+                            <h3 style="margin:0;">รายชื่อโครงการทั้งหมด</h3><button onclick="openProjectModal()" style="background:#007bff; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; font-size: 14px;">+ เพิ่มโครงการใหม่</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 600px;">
+                                <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">รหัส</th><th style="padding: 10px;">ชื่อโครงการ</th><th style="padding: 10px; text-align:center;">สถานะ</th><th style="padding: 10px; text-align:center;">จัดการ</th></tr></thead>
+                                <tbody id="adminProjectTable"><tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลด...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="card" style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                        <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">ผู้ทำรายการ</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">การกระทำ (Action)</th><th style="padding: 10px;">รายละเอียด</th></tr></thead>
-                        <tbody id="logsTableBody"><tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
-                    </table>
+
+                <!-- Menu 4 -->
+                <div id="menu4" class="content-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2>Logs ประวัติการทำงาน</h2><button id="btnRefreshLogs" onclick="fetchLogs()" style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรชข้อมูล</button>
+                    </div>
+                    <div class="card" style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 700px;">
+                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">ผู้ทำรายการ</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">การกระทำ (Action)</th><th style="padding: 10px;">รายละเอียด</th></tr></thead>
+                            <tbody id="logsTableBody"><tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -213,7 +271,7 @@
     </div>
 
     <script>
-        // ⚠️ Web App URL ของคุณ
+        // ⚠️ Web App URL เดิม
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
@@ -231,6 +289,14 @@
                 }
             }
         }
+        
+        // 📱 ฟังก์ชันเปิด-ปิดเมนูบนมือถือ
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('appSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
 
         function switchMenu(targetMenuId) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
@@ -239,6 +305,12 @@
             
             const activeBtn = document.querySelector(`.menu-item[onclick*="${targetMenuId}"]`);
             if (activeBtn) activeBtn.classList.add('active');
+            
+            // 📱 ปิด Sidebar อัตโนมัติบนมือถือเมื่อเลือกเมนูเสร็จ
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('appSidebar');
+                if (sidebar.classList.contains('open')) toggleMobileMenu();
+            }
             
             if (targetMenuId === 'menu1') fetchZoneList();
             if (targetMenuId === 'menu2') fetchSurveyData();
@@ -343,9 +415,9 @@
                             <td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td>
                             <td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td>
                             <td style="padding: 10px; text-align: center;">
-                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button>
-                                <button onclick="copyToClipboard('${surveyUrl}')" style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔗 คัดลอกลิงก์</button>
-                                <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button>
+                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️</button>
+                                <button onclick="copyToClipboard('${surveyUrl}')" style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔗</button>
+                                <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️</button>
                             </td>`;
                         tableBody.appendChild(tr);
                     });
@@ -533,6 +605,7 @@
                 loadAdminTables(); fetchProjects();
             }
         }
+        
         async function toggleProject(id, activeStatus) {
             if(confirm(`ต้องการ ${activeStatus ? 'เปิด' : 'ปิด'} โครงการ ${id} ใช่หรือไม่?`)) {
                 await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus, actor_id: currentUser.user_id }) });
@@ -541,7 +614,7 @@
         }
         
         async function deleteProject(id) {
-            if (confirm(`⚠️ ยืนยันการลบโครงการ ${id} อย่างถาวรใช่หรือไม่?\n\n🚨 คำเตือน: โซนพื้นที่ (QR Code) และสิทธิ์ของพนักงานทั้งหมดที่ผูกกับโครงการนี้จะถูกลบทิ้งไปด้วย และไม่สามารถกู้คืนได้!`)) {
+            if (confirm(`⚠️️ ยืนยันการลบโครงการ ${id} อย่างถาวรใช่หรือไม่?\n\n🚨 คำเตือน: โซนพื้นที่ (QR Code) และสิทธิ์ของพนักงานทั้งหมดที่ผูกกับโครงการนี้จะถูกลบทิ้งไปด้วย และไม่สามารถกู้คืนได้!`)) {
                 try {
                     const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteProject', project_id: id, actor_id: currentUser.user_id }) });
                     if (result.status === 'success') { loadAdminTables(); fetchProjects(); } else alert('Error: ' + result.message);
