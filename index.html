@@ -289,17 +289,38 @@
         }
         function copyLink() { document.getElementById('qrLink').select(); document.execCommand('copy'); alert("คัดลอก Link เรียบร้อยแล้ว"); }
 
-        async function fetchZoneList() {
+async function fetchZoneList() {
             const tableBody = document.getElementById('zoneTableBody'); tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
             const selectedProject = document.getElementById('projectSelect').value; let url = `${API_URL}?action=getZones`; if (selectedProject) url += `&project_id=${selectedProject}`;
+            
             try {
                 const result = await safeFetch(url); tableBody.innerHTML = ''; 
                 if (result.status === 'success' && result.data.length > 0) {
-                    let allowedZones = result.data; if (currentUser.role !== 'admin') allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
+                    let allowedZones = result.data; 
+                    if (currentUser.role !== 'admin') allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
                     if (allowedZones.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลโซน</td></tr>'; return; }
+                    
                     allowedZones.forEach(zone => {
                         const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
-                        tr.innerHTML = `<td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td><td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td><td style="padding: 10px; text-align: center;"><button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${window.location.origin}/survey?zone=${zone.zone_id}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button> <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button></td>`;
+                        
+                        // สร้าง URL สำหรับหน้าทำแบบประเมิน
+                        const surveyUrl = `https://stms-survey-a-pi.vercel.app/survey?zone=${zone.zone_id}`;
+                        
+                        tr.innerHTML = `
+                            <td style="padding: 10px;">${zone.zone_id}</td>
+                            <td style="padding: 10px;">${zone.zone_name}</td>
+                            <td style="padding: 10px;">
+                                <span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span>
+                            </td>
+                            <td style="padding: 10px; text-align: center;">
+                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button>
+                                
+                                <!-- 🔗 ปุ่มคัดลอกลิงก์ที่เพิ่มเข้ามาใหม่ -->
+                                <button onclick="copyToClipboard('${surveyUrl}')" style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔗 คัดลอกลิงก์</button>
+                                
+                                <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button>
+                            </td>
+                        `;
                         tableBody.appendChild(tr);
                     });
                 } else { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีข้อมูล</td></tr>'; }
@@ -311,6 +332,17 @@
             printWindow.document.write(`<html><head><title>Print QR - ${zoneName}</title><style>body { font-family: sans-serif; text-align: center; padding: 50px; } #qr-container { display: flex; justify-content: center; margin-top:20px; }</style><scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr` + `ipt></head><body><h2>สแกนเพื่อประเมินความพึงพอใจ</h2><h3>จุดบริการ: ${zoneName} (${zoneId})</h3><div id="qr-container"></div><scr` + `ipt>new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 }); setTimeout(() => { window.print(); }, 500);</scr` + `ipt></body></html>`);
             printWindow.document.close();
         }
+
+        function copyToClipboard(text) {
+            const tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            alert("คัดลอกลิงก์เรียบร้อยแล้ว");
+        }
+        
         function deleteZone(zoneId) { if(confirm(`คุณต้องการลบโซน ${zoneId} ใช่หรือไม่?`)) alert('ระบบลบข้อมูลจะพัฒนาในเฟส API ถัดไปครับ'); }
 
         // --- Menu 2 ---
