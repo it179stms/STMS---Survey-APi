@@ -122,13 +122,14 @@
                         <select id="filterRating" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกระดับคะแนน --</option><option value="5">5 ดาว (ดีมาก)</option><option value="4">4 ดาว (ดี)</option><option value="3">3 ดาว (ปานกลาง)</option><option value="2">2 ดาว (พอใช้)</option><option value="1">1 ดาว (ปรับปรุง)</option></select>
                         <select id="filterStatus" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกสถานะ --</option><option value="pending">รอดำเนินการ</option><option value="resolved">แก้ไขแล้ว</option></select>
                         <button onclick="fetchSurveyData()" style="background:#6c757d; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรช</button>
-                        <button onclick="printDashboardReport()" style="background:#17a2b8; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">🖨️️ พิมพ์รายงาน</button>
+                        <button onclick="printDashboardReport()" style="background:#17a2b8; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">🖨️ พิมพ์รายงาน</button>
                         <button onclick="exportDashboardCSV()" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">📊 Export CSV</button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">พื้นที่ (โซน)</th><th style="padding: 10px; text-align: center;">คะแนน</th><th style="padding: 10px;">ข้อเสนอแนะ</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
-                            <tbody id="surveyTableBody"><tr><td colspan="6" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
+                            <!-- 🚀 เพิ่มคอลัมน์ โครงการ -->
+                            <thead style="background: #e9ecef;"><tr><th style="padding: 10px;">วัน-เวลา</th><th style="padding: 10px;">โครงการ</th><th style="padding: 10px;">พื้นที่ (โซน)</th><th style="padding: 10px; text-align: center;">คะแนน</th><th style="padding: 10px;">ข้อเสนอแนะ</th><th style="padding: 10px;">สถานะ</th><th style="padding: 10px; text-align: center;">จัดการ</th></tr></thead>
+                            <tbody id="surveyTableBody"><tr><td colspan="7" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -343,7 +344,7 @@
                             <td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td>
                             <td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td>
                             <td style="padding: 10px; text-align: center;">
-                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button>
+                                <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️️ พิมพ์</button>
                                 <button onclick="copyToClipboard('${surveyUrl}')" style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔗 คัดลอกลิงก์</button>
                                 <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button>
                             </td>`;
@@ -362,10 +363,10 @@
 
         // --- Menu 2 ---
         let allSurveys = [];
-        let currentFilteredSurveys = []; // 🚀 ตัวแปรเก็บข้อมูลที่กรองแล้วสำหรับพิมพ์
+        let currentFilteredSurveys = []; // ตัวแปรเก็บข้อมูลที่กรองแล้ว
         
         async function fetchSurveyData() {
-            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>';
+            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>';
             try {
                 const result = await safeFetch(`${API_URL}?action=getSurveyResults`);
                 if (result.status === 'success') {
@@ -373,26 +374,36 @@
                     const selectProj = document.getElementById('filterProject'); selectProj.innerHTML = '<option value="all">-- ทุกโครงการ --</option>';
                     Array.from(document.getElementById('projectSelect').options).slice(1).forEach(opt => { const newOpt = document.createElement('option'); newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectProj.appendChild(newOpt); });
                     filterSurveys(); 
-                } else { tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
-            } catch (error) { tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดกดรีเฟรช</td></tr>`; }
+                } else { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
+            } catch (error) { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว โปรดกดรีเฟรช</td></tr>`; }
         }
         
         function filterSurveys() {
             const pFilter = document.getElementById('filterProject').value; const rFilter = document.getElementById('filterRating').value; const sFilter = document.getElementById('filterStatus').value;
             const filtered = allSurveys.filter(s => (pFilter === 'all' || String(s.project_id) === String(pFilter)) && (rFilter === 'all' || String(s.rating) === String(rFilter)) && (sFilter === 'all' || String(s.status) === String(sFilter)));
-            currentFilteredSurveys = filtered; // 🚀 เก็บข้อมูลปัจจุบันไว้สำหรับพิมพ์
+            currentFilteredSurveys = filtered; 
             renderSurveys(filtered); updateDashboardCards(filtered);
         }
         
         function renderSurveys(data) {
             const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '';
-            if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลประเมินในระบบ</td></tr>'; return; }
+            if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color:#666;">ไม่พบข้อมูลประเมินในระบบ</td></tr>'; return; }
             data.forEach(item => {
                 const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
                 const d = new Date(item.created_at); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
                 const statusHtml = item.status === 'pending' ? `<span style="background:#ffeeba; color:#856404; padding:3px 8px; border-radius:12px; font-size:12px;">รอดำเนินการ</span>` : `<span style="background:#d4edda; color:#155724; padding:3px 8px; border-radius:12px; font-size:12px;">แก้ไขแล้ว</span>`;
                 const actionBtn = item.status === 'pending' ? `<button onclick="markAsResolved('${item.survey_id}')" style="background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px;">✅ แก้ไขแล้ว</button>` : `-`;
-                tr.innerHTML = `<td style="padding: 10px;">${dateStr}</td><td style="padding: 10px;">${item.zone_name}<br><small style="color:#888;">${item.zone_id}</small></td><td style="padding: 10px; text-align: center; font-size:12px;">${'⭐'.repeat(parseInt(item.rating) || 0)}<br>(${item.rating})</td><td style="padding: 10px;">${item.feedback || '-'}</td><td style="padding: 10px;">${statusHtml}</td><td style="padding: 10px; text-align: center;">${actionBtn}</td>`;
+                
+                // 🚀 แสดงคอลัมน์ชื่อโครงการ
+                tr.innerHTML = `
+                    <td style="padding: 10px;">${dateStr}</td>
+                    <td style="padding: 10px; font-weight:600; color:#007bff;">${item.project_name || '-'}</td>
+                    <td style="padding: 10px;">${item.zone_name}<br><small style="color:#888;">${item.zone_id}</small></td>
+                    <td style="padding: 10px; text-align: center; font-size:12px;">${'⭐'.repeat(parseInt(item.rating) || 0)}<br>(${item.rating})</td>
+                    <td style="padding: 10px;">${item.feedback || '-'}</td>
+                    <td style="padding: 10px;">${statusHtml}</td>
+                    <td style="padding: 10px; text-align: center;">${actionBtn}</td>
+                `;
                 tableBody.appendChild(tr);
             });
         }
@@ -410,7 +421,6 @@
             } catch (error) { alert('เกิดข้อผิดพลาดในการเชื่อมต่อ ลองใหม่อีกครั้ง'); }
         }
 
-        // 🚀 ฟังก์ชันสั่งพิมพ์รายงาน
         function printDashboardReport() {
             const printWindow = window.open('', '_blank');
             let tableRows = '';
@@ -420,7 +430,9 @@
                 const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
                 const stars = '⭐'.repeat(parseInt(item.rating) || 0);
                 const statusText = item.status === 'pending' ? 'รอดำเนินการ' : 'แก้ไขแล้ว';
-                tableRows += `<tr><td style="padding:8px; border:1px solid #ccc;">${dateStr}</td><td style="padding:8px; border:1px solid #ccc;">${item.zone_name} (${item.zone_id})</td><td style="padding:8px; border:1px solid #ccc; text-align:center;">${stars} (${item.rating})</td><td style="padding:8px; border:1px solid #ccc;">${item.feedback || '-'}</td><td style="padding:8px; border:1px solid #ccc; text-align:center;">${statusText}</td></tr>`;
+                
+                // 🚀 เพิ่มคอลัมน์ชื่อโครงการในหน้าพิมพ์
+                tableRows += `<tr><td style="padding:8px; border:1px solid #ccc;">${dateStr}</td><td style="padding:8px; border:1px solid #ccc;">${item.project_name || '-'}</td><td style="padding:8px; border:1px solid #ccc;">${item.zone_name} (${item.zone_id})</td><td style="padding:8px; border:1px solid #ccc; text-align:center;">${stars} (${item.rating})</td><td style="padding:8px; border:1px solid #ccc;">${item.feedback || '-'}</td><td style="padding:8px; border:1px solid #ccc; text-align:center;">${statusText}</td></tr>`;
             });
 
             printWindow.document.write(`
@@ -431,8 +443,8 @@
                 <h2 style="text-align:center;">รายงานผลการประเมินพื้นที่</h2>
                 <p><strong>จำนวนทั้งหมด:</strong> ${document.getElementById('dashTotal').innerText} รายการ | <strong>คะแนนเฉลี่ย:</strong> ${document.getElementById('dashAvg').innerText} | <strong>รอดำเนินการ:</strong> ${document.getElementById('dashPending').innerText}</p>
                 <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left;">
-                    <thead><tr style="background:#eee;"><th style="padding:8px; border:1px solid #ccc;">วัน-เวลา</th><th style="padding:8px; border:1px solid #ccc;">พื้นที่ (โซน)</th><th style="padding:8px; border:1px solid #ccc; text-align:center;">คะแนน</th><th style="padding:8px; border:1px solid #ccc;">ข้อเสนอแนะ</th><th style="padding:8px; border:1px solid #ccc; text-align:center;">สถานะ</th></tr></thead>
-                    <tbody>${tableRows || '<tr><td colspan="5" style="text-align:center; padding:20px;">ไม่มีข้อมูล</td></tr>'}</tbody>
+                    <thead><tr style="background:#eee;"><th style="padding:8px; border:1px solid #ccc;">วัน-เวลา</th><th style="padding:8px; border:1px solid #ccc;">โครงการ</th><th style="padding:8px; border:1px solid #ccc;">พื้นที่ (โซน)</th><th style="padding:8px; border:1px solid #ccc; text-align:center;">คะแนน</th><th style="padding:8px; border:1px solid #ccc;">ข้อเสนอแนะ</th><th style="padding:8px; border:1px solid #ccc; text-align:center;">สถานะ</th></tr></thead>
+                    <tbody>${tableRows || '<tr><td colspan="6" style="text-align:center; padding:20px;">ไม่มีข้อมูล</td></tr>'}</tbody>
                 </table>
                 <script>setTimeout(() => { window.print(); }, 800);<\/script>
                 </body></html>
@@ -440,46 +452,29 @@
             printWindow.document.close();
         }
 
-        // 🚀 ระบบส่งออกไฟล์ CSV สำหรับนำไปเปิดใน Excel
         function exportDashboardCSV() {
-            // เลือกข้อมูลที่จะส่งออก (เอาที่กรองไว้ หรือถ้าไม่มีให้เอาทั้งหมด)
             const dataToExport = currentFilteredSurveys.length > 0 ? currentFilteredSurveys : allSurveys;
-            
-            if (dataToExport.length === 0) {
-                alert('ไม่มีข้อมูลสำหรับส่งออกครับ');
-                return;
-            }
+            if (dataToExport.length === 0) return alert('ไม่มีข้อมูลสำหรับส่งออกครับ');
 
-            // สร้างหัวตาราง (Headers)
-            let csvContent = "วัน-เวลา,รหัสพื้นที่,ชื่อพื้นที่,คะแนน,ข้อเสนอแนะ,สถานะ\n";
+            // 🚀 เพิ่มคอลัมน์ โครงการ ลงใน Header
+            let csvContent = "วัน-เวลา,โครงการ,รหัสพื้นที่,ชื่อพื้นที่,คะแนน,ข้อเสนอแนะ,สถานะ\n";
             
-            // วนลูปดึงข้อมูลมาใส่ทีละบรรทัด
             dataToExport.forEach(item => {
                 const d = new Date(item.created_at);
                 const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                
-                // จัดการข้อเสนอแนะ: ถ้ามีการขึ้นบรรทัดใหม่หรือมีลูกน้ำ(,) ในข้อความ ต้องครอบด้วย "" 
                 let feedback = item.feedback ? item.feedback.replace(/"/g, '""') : '-';
                 const statusText = item.status === 'pending' ? 'รอดำเนินการ' : 'แก้ไขแล้ว';
                 
-                // นำข้อมูลมาต่อกัน (คั่นด้วยลูกน้ำ)
-                const row = `"${dateStr}","${item.zone_id}","${item.zone_name}","${item.rating}","${feedback}","${statusText}"`;
+                // 🚀 เอา project_name มายัดใส่บรรทัด CSV
+                const row = `"${dateStr}","${item.project_name || '-'}","${item.zone_id}","${item.zone_name}","${item.rating}","${feedback}","${statusText}"`;
                 csvContent += row + "\n";
             });
 
-            // ใส่รหัส UTF-8 BOM เพื่อให้ Excel อ่านภาษาไทยได้ 100% ไม่เป็นตัวยึกยือ
             const bom = "\uFEFF";
             const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
-            
-            // สร้างคำสั่งให้เบราว์เซอร์ดาวน์โหลดไฟล์
             const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            
-            // ตั้งชื่อไฟล์ (ใช้วันที่และเวลาปัจจุบันต่อท้าย)
-            const fileName = `Survey_Report_${new Date().toISOString().slice(0,10)}.csv`;
-            link.setAttribute("download", fileName);
-            
+            link.href = URL.createObjectURL(blob);
+            link.download = `Survey_Report_${new Date().toISOString().slice(0,10)}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -600,7 +595,6 @@
             }
         }
 
-        // 🚀 ระบบลบผู้ใช้งาน
         async function deleteUser(id) {
             if (id === currentUser.user_id) return alert('ไม่สามารถลบบัญชีตัวเองได้ครับ');
             if (confirm(`⚠️ ยืนยันการลบบัญชีผู้ใช้ ${id} อย่างถาวรใช่หรือไม่?\n(ข้อมูลสิทธิ์ทั้งหมดจะถูกลบไปด้วย)`)) {
