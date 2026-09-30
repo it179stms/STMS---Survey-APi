@@ -123,6 +123,7 @@
                         <select id="filterStatus" onchange="filterSurveys()" style="flex:1; min-width:150px; margin:0;"><option value="all">-- ทุกสถานะ --</option><option value="pending">รอดำเนินการ</option><option value="resolved">แก้ไขแล้ว</option></select>
                         <button onclick="fetchSurveyData()" style="background:#6c757d; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer;">🔄 รีเฟรช</button>
                         <button onclick="printDashboardReport()" style="background:#17a2b8; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">🖨️️ พิมพ์รายงาน</button>
+                        <button onclick="exportDashboardCSV()" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; margin-left:10px;">📊 Export CSV</button>
                     </div>
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
@@ -437,6 +438,51 @@
                 </body></html>
             `);
             printWindow.document.close();
+        }
+
+        // 🚀 ระบบส่งออกไฟล์ CSV สำหรับนำไปเปิดใน Excel
+        function exportDashboardCSV() {
+            // เลือกข้อมูลที่จะส่งออก (เอาที่กรองไว้ หรือถ้าไม่มีให้เอาทั้งหมด)
+            const dataToExport = currentFilteredSurveys.length > 0 ? currentFilteredSurveys : allSurveys;
+            
+            if (dataToExport.length === 0) {
+                alert('ไม่มีข้อมูลสำหรับส่งออกครับ');
+                return;
+            }
+
+            // สร้างหัวตาราง (Headers)
+            let csvContent = "วัน-เวลา,รหัสพื้นที่,ชื่อพื้นที่,คะแนน,ข้อเสนอแนะ,สถานะ\n";
+            
+            // วนลูปดึงข้อมูลมาใส่ทีละบรรทัด
+            dataToExport.forEach(item => {
+                const d = new Date(item.created_at);
+                const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+                
+                // จัดการข้อเสนอแนะ: ถ้ามีการขึ้นบรรทัดใหม่หรือมีลูกน้ำ(,) ในข้อความ ต้องครอบด้วย "" 
+                let feedback = item.feedback ? item.feedback.replace(/"/g, '""') : '-';
+                const statusText = item.status === 'pending' ? 'รอดำเนินการ' : 'แก้ไขแล้ว';
+                
+                // นำข้อมูลมาต่อกัน (คั่นด้วยลูกน้ำ)
+                const row = `"${dateStr}","${item.zone_id}","${item.zone_name}","${item.rating}","${feedback}","${statusText}"`;
+                csvContent += row + "\n";
+            });
+
+            // ใส่รหัส UTF-8 BOM เพื่อให้ Excel อ่านภาษาไทยได้ 100% ไม่เป็นตัวยึกยือ
+            const bom = "\uFEFF";
+            const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // สร้างคำสั่งให้เบราว์เซอร์ดาวน์โหลดไฟล์
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            
+            // ตั้งชื่อไฟล์ (ใช้วันที่และเวลาปัจจุบันต่อท้าย)
+            const fileName = `Survey_Report_${new Date().toISOString().slice(0,10)}.csv`;
+            link.setAttribute("download", fileName);
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // --- Menu 3 ---
