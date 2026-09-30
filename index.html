@@ -251,15 +251,45 @@
             finally { btn.innerText = 'เข้าสู่ระบบ'; btn.disabled = false; }
         }
 
-        function setupApp() {
-            document.getElementById('loginSection').style.display = 'none'; document.getElementById('mainApp').style.display = 'flex'; 
-            document.getElementById('userNameDisplay').innerText = currentUser.name; document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
-            if(currentUser.role === 'admin') document.getElementById('navMenu3').style.display = 'block';
+function setupApp() {
+            document.getElementById('loginSection').style.display = 'none'; 
+            document.getElementById('mainApp').style.display = 'flex'; 
+            document.getElementById('userNameDisplay').innerText = currentUser.name; 
+            document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
+            
+            // 1. ตรวจสอบสิทธิ์เมนู Admin ใหม่ทุกครั้ง (ป้องกัน Staff เห็นเมนู Admin ค้าง)
+            document.getElementById('navMenu3').style.display = (currentUser.role === 'admin') ? 'block' : 'none';
+            
+            // 2. บังคับสลับกลับมาที่หน้าจอแรก (Menu 1) เสมอเมื่อล็อกอิน
+            switchMenu('menu1');
             fetchProjects();
         }
 
-        function logout() { currentUser = null; document.getElementById('loginSection').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; document.getElementById('userId').value = ''; document.getElementById('password').value = ''; }
-
+        function logout() { 
+            currentUser = null; 
+            document.getElementById('loginSection').style.display = 'flex'; 
+            document.getElementById('mainApp').style.display = 'none'; 
+            document.getElementById('userId').value = ''; 
+            document.getElementById('password').value = ''; 
+            
+            // 3. กวาดล้างข้อมูลในตารางและตัวแปรทิ้งทั้งหมด (ป้องกันข้อมูลหลุดไปหา User ถัดไป)
+            document.getElementById('zoneTableBody').innerHTML = '';
+            document.getElementById('surveyTableBody').innerHTML = '';
+            document.getElementById('adminProjectTable').innerHTML = '';
+            document.getElementById('adminUserTable').innerHTML = '';
+            document.getElementById('logsTableBody').innerHTML = '';
+            
+            allSurveys = [];
+            allGlobalProjects = [];
+            
+            // 4. รีเซ็ตตัวเลข Dashboard และตัวกรองต่างๆ
+            document.getElementById('dashTotal').innerText = '0';
+            document.getElementById('dashAvg').innerText = '0.0';
+            document.getElementById('dashPending').innerText = '0';
+            document.getElementById('projectSelect').innerHTML = '<option value="">-- เลือกโครงการ --</option>';
+            document.getElementById('zoneCreator').style.display = 'none';
+            document.getElementById('qrResult').style.display = 'none';
+        }
         // --- Menu 1 ---
         async function fetchProjects() {
             try {
