@@ -211,7 +211,7 @@
     </div>
 
     <script>
-        // ⚠️ Web App URL ของคุณ
+        // ⚠️️ Web App URL ของคุณ (ไม่ต้องแก้ ผมเว้นให้แล้ว)
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
@@ -230,10 +230,15 @@
             }
         }
 
+        // 🛠️ แก้ไขบั๊กจอดำ: เปลี่ยนวิธีเพิ่มแถบสี (active) ให้ปลอดภัยขึ้น
         function switchMenu(targetMenuId) {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            document.getElementById(targetMenuId).classList.add('active'); event.target.classList.add('active');
+            document.getElementById(targetMenuId).classList.add('active'); 
+            
+            const activeBtn = document.querySelector(`.menu-item[onclick*="${targetMenuId}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+            
             if (targetMenuId === 'menu1') fetchZoneList();
             if (targetMenuId === 'menu2') fetchSurveyData();
             if (targetMenuId === 'menu3') loadAdminTables();  
@@ -251,17 +256,21 @@
             finally { btn.innerText = 'เข้าสู่ระบบ'; btn.disabled = false; }
         }
 
-function setupApp() {
+        // 🛠️ แก้ไขบั๊กหน้าค้างซ้ำซ้อน: จัดการให้โหลดเฉพาะหน้าแรกอย่างถูกต้อง
+        function setupApp() {
             document.getElementById('loginSection').style.display = 'none'; 
             document.getElementById('mainApp').style.display = 'flex'; 
             document.getElementById('userNameDisplay').innerText = currentUser.name; 
             document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
             
-            // 1. ตรวจสอบสิทธิ์เมนู Admin ใหม่ทุกครั้ง (ป้องกัน Staff เห็นเมนู Admin ค้าง)
             document.getElementById('navMenu3').style.display = (currentUser.role === 'admin') ? 'block' : 'none';
             
-            // 2. บังคับสลับกลับมาที่หน้าจอแรก (Menu 1) เสมอเมื่อล็อกอิน
-            switchMenu('menu1');
+            // บังคับสลับกลับมาที่หน้าจอแรกโดยตรง (ลดการยิง API ซ้ำซ้อน)
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('menu1').classList.add('active'); 
+            document.querySelector('.menu-item[onclick*="menu1"]').classList.add('active');
+            
             fetchProjects();
         }
 
@@ -272,24 +281,16 @@ function setupApp() {
             document.getElementById('userId').value = ''; 
             document.getElementById('password').value = ''; 
             
-            // 3. กวาดล้างข้อมูลในตารางและตัวแปรทิ้งทั้งหมด (ป้องกันข้อมูลหลุดไปหา User ถัดไป)
-            document.getElementById('zoneTableBody').innerHTML = '';
-            document.getElementById('surveyTableBody').innerHTML = '';
-            document.getElementById('adminProjectTable').innerHTML = '';
-            document.getElementById('adminUserTable').innerHTML = '';
+            document.getElementById('zoneTableBody').innerHTML = ''; document.getElementById('surveyTableBody').innerHTML = '';
+            document.getElementById('adminProjectTable').innerHTML = ''; document.getElementById('adminUserTable').innerHTML = '';
             document.getElementById('logsTableBody').innerHTML = '';
+            allSurveys = []; allGlobalProjects = [];
             
-            allSurveys = [];
-            allGlobalProjects = [];
-            
-            // 4. รีเซ็ตตัวเลข Dashboard และตัวกรองต่างๆ
-            document.getElementById('dashTotal').innerText = '0';
-            document.getElementById('dashAvg').innerText = '0.0';
-            document.getElementById('dashPending').innerText = '0';
+            document.getElementById('dashTotal').innerText = '0'; document.getElementById('dashAvg').innerText = '0.0'; document.getElementById('dashPending').innerText = '0';
             document.getElementById('projectSelect').innerHTML = '<option value="">-- เลือกโครงการ --</option>';
-            document.getElementById('zoneCreator').style.display = 'none';
-            document.getElementById('qrResult').style.display = 'none';
+            document.getElementById('zoneCreator').style.display = 'none'; document.getElementById('qrResult').style.display = 'none';
         }
+
         // --- Menu 1 ---
         async function fetchProjects() {
             try {
@@ -303,6 +304,7 @@ function setupApp() {
             } catch(e) {}
         }
         function loadZones() { document.getElementById('zoneCreator').style.display = document.getElementById('projectSelect').value ? 'block' : 'none'; fetchZoneList(); }
+        
         async function generateQR() { 
             const zoneName = document.getElementById('zoneName').value.trim(); const projectId = document.getElementById('projectSelect').value;
             if (!zoneName) return alert("กรุณาระบุชื่อพื้นที่");
@@ -310,19 +312,24 @@ function setupApp() {
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName }) });
                 if(result.status === 'success') {
-                    const surveyUrl = `${window.location.origin}/survey?zone=${result.new_zone_id}`;
+                    const surveyUrl = `https://stms-survey-a-pi.vercel.app/survey?zone=${result.new_zone_id}`;
                     document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${result.new_zone_id})`; document.getElementById('qrLink').value = surveyUrl;
                     document.getElementById('qrcode').innerHTML = ""; new QRCode(document.getElementById('qrcode'), { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
                     document.getElementById('qrResult').style.display = 'block'; document.getElementById('zoneName').value = ''; fetchZoneList(); 
                 } else { alert("Error: " + result.message); }
             } catch(e) { alert("ไม่สามารถติดต่อฐานข้อมูลได้"); } finally { btn.innerText = "+ สร้าง QR Code"; btn.disabled = false; }
         }
-        function copyLink() { document.getElementById('qrLink').select(); document.execCommand('copy'); alert("คัดลอก Link เรียบร้อยแล้ว"); }
+        
+        function copyToClipboard(text) {
+            const tempInput = document.createElement("input"); tempInput.value = text; document.body.appendChild(tempInput);
+            tempInput.select(); document.execCommand("copy"); document.body.removeChild(tempInput);
+            alert("คัดลอกลิงก์เรียบร้อยแล้ว");
+        }
+        function copyLink() { copyToClipboard(document.getElementById('qrLink').value); }
 
-async function fetchZoneList() {
+        async function fetchZoneList() {
             const tableBody = document.getElementById('zoneTableBody'); tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
             const selectedProject = document.getElementById('projectSelect').value; let url = `${API_URL}?action=getZones`; if (selectedProject) url += `&project_id=${selectedProject}`;
-            
             try {
                 const result = await safeFetch(url); tableBody.innerHTML = ''; 
                 if (result.status === 'success' && result.data.length > 0) {
@@ -332,25 +339,15 @@ async function fetchZoneList() {
                     
                     allowedZones.forEach(zone => {
                         const tr = document.createElement('tr'); tr.style.borderBottom = "1px solid #eee";
-                        
-                        // สร้าง URL สำหรับหน้าทำแบบประเมิน
                         const surveyUrl = `https://stms-survey-a-pi.vercel.app/survey?zone=${zone.zone_id}`;
-                        
                         tr.innerHTML = `
-                            <td style="padding: 10px;">${zone.zone_id}</td>
-                            <td style="padding: 10px;">${zone.zone_name}</td>
-                            <td style="padding: 10px;">
-                                <span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span>
-                            </td>
+                            <td style="padding: 10px;">${zone.zone_id}</td><td style="padding: 10px;">${zone.zone_name}</td>
+                            <td style="padding: 10px;"><span style="background: ${zone.is_active ? '#d4edda' : '#f8d7da'}; color: ${zone.is_active ? '#155724' : '#721c24'}; padding: 3px 8px; border-radius: 12px; font-size: 12px;">${zone.is_active ? 'ใช้งาน' : 'ระงับ'}</span></td>
                             <td style="padding: 10px; text-align: center;">
                                 <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🖨️ พิมพ์</button>
-                                
-                                <!-- 🔗 ปุ่มคัดลอกลิงก์ที่เพิ่มเข้ามาใหม่ -->
                                 <button onclick="copyToClipboard('${surveyUrl}')" style="background: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🔗 คัดลอกลิงก์</button>
-                                
                                 <button onclick="deleteZone('${zone.zone_id}')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 5px;">🗑️ ลบ</button>
-                            </td>
-                        `;
+                            </td>`;
                         tableBody.appendChild(tr);
                     });
                 } else { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:#666;">ยังไม่มีข้อมูล</td></tr>'; }
@@ -362,17 +359,6 @@ async function fetchZoneList() {
             printWindow.document.write(`<html><head><title>Print QR - ${zoneName}</title><style>body { font-family: sans-serif; text-align: center; padding: 50px; } #qr-container { display: flex; justify-content: center; margin-top:20px; }</style><scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr` + `ipt></head><body><h2>สแกนเพื่อประเมินความพึงพอใจ</h2><h3>จุดบริการ: ${zoneName} (${zoneId})</h3><div id="qr-container"></div><scr` + `ipt>new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 }); setTimeout(() => { window.print(); }, 500);</scr` + `ipt></body></html>`);
             printWindow.document.close();
         }
-
-        function copyToClipboard(text) {
-            const tempInput = document.createElement("input");
-            tempInput.value = text;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempInput);
-            alert("คัดลอกลิงก์เรียบร้อยแล้ว");
-        }
-        
         function deleteZone(zoneId) { if(confirm(`คุณต้องการลบโซน ${zoneId} ใช่หรือไม่?`)) alert('ระบบลบข้อมูลจะพัฒนาในเฟส API ถัดไปครับ'); }
 
         // --- Menu 2 ---
@@ -460,7 +446,7 @@ async function fetchZoneList() {
         async function submitProjectModal() {
             const pname = document.getElementById('modalProjName').value.trim();
             if (!pname) return alert('กรุณากรอกชื่อโครงการ');
-            const btn = document.getElementById('btnSaveProject'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; // 👈 แสดงสถานะกำลังบันทึก
+            const btn = document.getElementById('btnSaveProject'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; 
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname }) });
                 if (result.status === 'success') { closeModals(); loadAdminTables(); fetchProjects(); } else alert(result.message);
@@ -488,7 +474,6 @@ async function fetchZoneList() {
             document.getElementById('modalUserId').disabled = isEdit; 
             document.getElementById('modalUserTitle').innerText = isEdit ? '✏️ แก้ไขข้อมูลผู้ใช้งาน' : '👤 เพิ่มผู้ใช้งานใหม่';
             
-            // 👈 สลับคำอธิบายรหัสผ่านตามสถานะ เพิ่มใหม่ vs แก้ไข
             document.getElementById('modalUserPwd').placeholder = isEdit ? 'รหัสผ่าน (เว้นว่างได้ถ้าไม่ต้องการเปลี่ยน)' : 'รหัสผ่าน (ต้องระบุ)';
             
             let assignedArr = (assignedStr || '').split(',');
@@ -515,7 +500,7 @@ async function fetchZoneList() {
             if (!uid || !name) return alert('กรุณากรอกรหัสและชื่อผู้ใช้งาน');
             if (!isEditingUser && !pwd) return alert('กรุณาตั้งรหัสผ่านสำหรับผู้ใช้ใหม่');
 
-            const btn = document.getElementById('btnSaveUser'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; // 👈 แสดงสถานะกำลังบันทึก
+            const btn = document.getElementById('btnSaveUser'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; 
             let payload = isEditingUser ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs } : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs }; 
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
