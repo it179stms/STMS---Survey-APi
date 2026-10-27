@@ -12,12 +12,12 @@
         body { 
             font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; 
             text-align: center; 
-            /* 🌸 พื้นหลังไล่สีพาสเทลน่ารักๆ */
-            background: linear-gradient(135deg, #ffe0f0 0%, #fff5e1 100%); 
+            /* 🌿 พื้นหลังไล่สีเขียวพาสเทล-มินต์ */
+            background: linear-gradient(135deg, #d1fae5 0%, #f0fdf4 100%); 
             min-height: 100vh;
             margin: 0; 
             padding: 20px; 
-            color: #594a4e; 
+            color: #4b5563; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -30,33 +30,33 @@
             background: #ffffff; 
             padding: 40px 25px; 
             border-radius: 32px; 
-            box-shadow: 0 15px 35px rgba(255, 168, 187, 0.3); 
+            box-shadow: 0 15px 35px rgba(16, 185, 129, 0.15); 
             max-width: 450px; 
             width: 100%;
             display: none; 
-            border: 3px solid #fff0f5;
+            border: 3px solid #ecfdf5;
             box-sizing: border-box;
         }
         
         h2 { 
-            color: #ff6b81; 
+            color: #10b981; 
             font-size: 26px; 
             margin-top: 0;
             margin-bottom: 12px; 
-            text-shadow: 1px 1px 0px #ffe5e5;
+            text-shadow: 1px 1px 0px #d1fae5;
         }
         
         /* 📍 ป้ายชื่อโซนแบบกลมๆ น่ารัก */
         .zone-name { 
-            background: #e0f2fe; 
-            color: #0284c7; 
+            background: #ccfbf1; 
+            color: #0f766e; 
             font-weight: 600; 
             font-size: 16px; 
             margin-bottom: 25px; 
             padding: 8px 20px;
             border-radius: 50px;
             display: inline-block;
-            border: 2px dashed #bae6fd;
+            border: 2px dashed #99f6e4;
         }
         
         /* ✨ กล่องอีโมจิ */
@@ -64,10 +64,10 @@
             display: flex; 
             justify-content: space-between; 
             margin-bottom: 25px; 
-            background: #fff0f5; 
+            background: #f0fdf4; 
             border-radius: 24px; 
             padding: 20px 10px; 
-            border: 2px dashed #ffb6c1; 
+            border: 2px dashed #6ee7b7; 
         }
         
         .emoji-btn { 
@@ -86,7 +86,7 @@
             opacity: 1; 
             transform: scale(1.35) rotate(0deg); 
             filter: grayscale(0%); 
-            text-shadow: 0 10px 15px rgba(0,0,0,0.15); 
+            text-shadow: 0 10px 15px rgba(0,0,0,0.1); 
         }
         
         /* 📝 กล่องข้อความ */
@@ -94,26 +94,26 @@
             width: 100%; 
             height: 100px; 
             padding: 15px; 
-            border: 2px solid #f8a5c2; 
+            border: 2px solid #6ee7b7; 
             border-radius: 20px; 
             margin-bottom: 25px; 
             resize: none; 
             box-sizing: border-box; 
             font-size: 15px; 
-            background: #fffafa;
-            color: #594a4e;
+            background: #f8fafc;
+            color: #4b5563;
             transition: all 0.2s;
         }
         textarea:focus { 
             outline: none; 
-            border-color: #ff6b81; 
+            border-color: #10b981; 
             background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(255, 107, 129, 0.15);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
         }
         
         /* 🚀 ปุ่มกดยืนยัน */
         .submit-btn { 
-            background: linear-gradient(135deg, #ff7979 0%, #ffbad2 100%); 
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%); 
             color: white; 
             border: none; 
             padding: 16px 20px; 
@@ -123,11 +123,11 @@
             font-weight: 700; 
             cursor: pointer; 
             transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
-            box-shadow: 0 8px 20px rgba(255, 121, 121, 0.3);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
         }
         .submit-btn:hover { 
             transform: translateY(-3px);
-            box-shadow: 0 12px 25px rgba(255, 121, 121, 0.4);
+            box-shadow: 0 12px 25px rgba(16, 185, 129, 0.4);
         }
         .submit-btn:active { transform: translateY(1px); }
         
@@ -135,8 +135,8 @@
         .loader { 
             display: none; 
             margin: 20px auto; 
-            border: 4px solid #fff0f5; 
-            border-top: 4px solid #ff6b81; 
+            border: 4px solid #ecfdf5; 
+            border-top: 4px solid #10b981; 
             border-radius: 50%; 
             width: 35px; 
             height: 35px; 
@@ -156,11 +156,11 @@
     <!-- 🥺 หน้าต่าง Error กรณี QR Code ผิดพลาด -->
     <div class="error-box" id="errorView">
         <div style="font-size: 65px; margin-bottom: 10px; animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);">🥺</div>
-        <h2 style="color: #ff6b81; margin-bottom: 10px;">แง... ไม่พบข้อมูลพื้นที่</h2>
+        <h2 style="color: #10b981; margin-bottom: 10px;">แง... ไม่พบข้อมูลพื้นที่</h2>
         <p style="color: #666; font-size: 16px; line-height: 1.6;">กรุณาสแกน QR Code จากป้ายประกาศ<br>ณ จุดให้บริการ เพื่อทำแบบประเมินนะคะ</p>
     </div>
 
-    <!-- 💖 หน้าต่างแบบประเมิน -->
+    <!-- 💚 หน้าต่างแบบประเมิน -->
     <div class="survey-box" id="surveyView">
         <h2>ความพึงพอใจการดูแลพื้นที่</h2>
         <div class="zone-name" id="zoneDisplay">กำลังโหลดข้อมูล...</div>
@@ -246,10 +246,10 @@
             try {
                 const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                 
-                // 💖 เปลี่ยนหน้าตาเป็นสถานะสำเร็จ
+                // 💚 เปลี่ยนหน้าตาเป็นสถานะสำเร็จ
                 document.getElementById('surveyView').innerHTML = `
                     <div class="success-msg">
-                        <div class="success-icon">💖</div>
+                        <div class="success-icon">💚</div>
                         <h2>เย้! ส่งข้อมูลสำเร็จ</h2>
                         <p>ขอบคุณที่ร่วมประเมิน<br>เพื่อนำไปปรับปรุงบริการนะคะ ✨</p>
                     </div>
