@@ -1,878 +1,1321 @@
-<!DOCTYPE html>
-<html lang="th" class="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STMS - QR Survey - Admin</title>
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/LineSeedSansTH/LineSeedSansTH.css" rel="stylesheet" />
-    
-    <!-- Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+"use client";
+import { useEffect, useState, useMemo } from 'react';
+import { AlertSuccess, AlertError, AlertLoading, AlertConfirm } from '@/utils/alerts';
 
-    <style>
-        /* =========================================
-           Tailwind-Inspired & Dark Mode System
-           ========================================= */
-        :root {
-            /* Brand Colors */
-            --primary: #2563eb; --primary-hover: #1d4ed8;
-            --danger: #ef4444;  --danger-hover: #dc2626;
-            --success: #10b981; --success-hover: #059669;
-            --warning: #f59e0b; --warning-hover: #d97706;
-            --gray: #6b7280;    --gray-hover: #4b5563;
-            
-            /* Light Theme */
-            --bg-body: #f3f4f6;
-            --bg-surface: #ffffff;
-            --bg-sub: #f9fafb;
-            --bg-hover: #f3f4f6;
-            --bg-sidebar: #ffffff;
-            --text-main: #111827;
-            --text-muted: #6b7280;
-            --border: #e5e7eb;
-            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-        }
+export default function Customers() {
+  const [customers, setCustomers] = useState([]);
+  const [contracts, setContracts] = useState([]);
+  const [operations, setOperations] = useState([]); 
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null); 
+  
+  const [activeTab, setActiveTab] = useState('list'); 
 
-        html.dark {
-            /* Dark Theme */
-            --bg-body: #0f172a;
-            --bg-surface: #1e293b;
-            --bg-sub: #334155;
-            --bg-hover: #334155;
-            --bg-sidebar: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
-            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.5);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
-        }
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
 
-        body { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
-        
-        /* 🔒 Login Box */
-        #loginSection { width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background: var(--bg-body); padding: 20px; box-sizing: border-box; }
-        .login-box { background: var(--bg-surface); padding: 40px; border-radius: 1.5rem; box-shadow: var(--shadow-md); width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); }
-        .login-box h2 { font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; }
-        
-        /* 📱 Forms & Inputs */
-        .form-input { width: 100%; padding: 12px 16px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 0.75rem; box-sizing: border-box; font-size: 15px; font-family: inherit; transition: all 0.2s; background: var(--bg-sub); color: var(--text-main); }
-        .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); background: var(--bg-surface); }
-        
-        /* 🎯 Buttons */
-        .btn { padding: 10px 18px; border-radius: 0.75rem; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: var(--shadow-sm); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-w-full { width: 100%; }
-        .btn-primary { background: var(--primary); color: white; } .btn-primary:hover { background: var(--primary-hover); }
-        .btn-danger { background: var(--danger); color: white; } .btn-danger:hover { background: var(--danger-hover); }
-        .btn-success { background: var(--success); color: white; } .btn-success:hover { background: var(--success-hover); }
-        .btn-warning { background: var(--warning); color: white; } .btn-warning:hover { background: var(--warning-hover); }
-        .btn-gray { background: var(--bg-sub); color: var(--text-main); border: 1px solid var(--border); } .btn-gray:hover { background: var(--border); }
-        .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 0.5rem; }
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-        /* 📋 Badges */
-        .badge { padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; display: inline-block; }
-        html:not(.dark) .badge-green { background: #d1fae5; color: #065f46; }
-        html.dark .badge-green { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        
-        html:not(.dark) .badge-red { background: #fee2e2; color: #991b1b; }
-        html.dark .badge-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        
-        html:not(.dark) .badge-yellow { background: #fef3c7; color: #92400e; }
-        html.dark .badge-yellow { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-        
-        html:not(.dark) .badge-gray { background: #f3f4f6; color: #374151; }
-        html.dark .badge-gray { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    customerId: '', customerName: '', contactPerson: '', 
+    email: '', phone: '', address: '', taxId: '', status: 'Active'
+  });
 
-        /* 🗂 Layout (Next.js App Style) */
-        #mainApp { display: none; width: 100%; height: 100vh; flex-direction: row; overflow: hidden; }
-        .sidebar { width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; transition: background-color 0.3s; }
-        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .sidebar-header h3 { margin: 0; font-weight: 700; font-size: 20px; color: var(--text-main); letter-spacing: 0.5px; }
-        .menu-list { flex: 1; padding: 16px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .menu-item { padding: 12px 16px; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 10px; }
-        .menu-item:hover { background: var(--bg-hover); color: var(--text-main); }
-        .menu-item.active { background: var(--primary); color: white; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
-        
-        /* 🔝 Top Navbar */
-        .topbar { background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .topbar-right { display: flex; align-items: center; gap: 16px; }
-        .user-profile { display: flex; align-items: center; gap: 12px; border-left: 1px solid var(--border); padding-left: 16px; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; }
-        .user-details { display: flex; flex-direction: column; }
-        .theme-toggle { background: var(--bg-sub); border: 1px solid var(--border); color: var(--text-main); font-size: 18px; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .theme-toggle:hover { background: var(--border); }
-        
-        .content-area { flex: 1; padding: 30px; padding-bottom: 100px; overflow-y: auto; }
-        .content-section { display: none; animation: fadeIn 0.3s ease-out; } 
-        .content-section.active { display: block; } 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .card { background: var(--bg-surface); padding: 24px; border-radius: 1rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 24px; }
-        .card-title { font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 16px; margin-top: 0; display: flex; align-items: center; justify-content: space-between; }
-        
-        /* 📊 Table (Modern Tailwind Style) */
-        .table-wrapper { border: 1px solid var(--border); border-radius: 0.75rem; overflow-x: auto; box-shadow: var(--shadow-sm); }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px; background: var(--bg-surface); }
-        thead { background: var(--bg-sub); border-bottom: 1px solid var(--border); }
-        th { padding: 14px 16px; font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
-        td { padding: 16px; border-bottom: 1px solid var(--border); color: var(--text-main); vertical-align: middle; }
-        tbody tr:hover { background-color: var(--bg-hover); }
-        
-        /* 📑 Tabs */
-        .tab-header { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-sub); padding: 0 24px; }
-        .tab-btn { padding: 16px 24px; cursor: pointer; border: none; background: none; font-size: 15px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s; margin-bottom: -1px; }
-        .tab-btn:hover { color: var(--text-main); }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        /* 🪟 Modals (SweetAlert-like) */
-        .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center; animation: fadeIn 0.2s ease-out; }
-        .modal-content { background: var(--bg-surface); padding: 32px; border-radius: 1.5rem; width: 90%; max-width: 450px; position: relative; box-shadow: var(--shadow-md); border: 1px solid var(--border); }
-        .close-btn { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: var(--text-muted); border:none; background:none; transition: color 0.2s; padding: 4px;}
-        .close-btn:hover { color: var(--text-main); }
-        
-        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 16px; max-height: 200px; overflow-y: auto; background: var(--bg-sub); padding: 16px; border-radius: 0.75rem; border: 1px solid var(--border); }
-        .checkbox-group label { display: flex; align-items: center; font-size: 14px; gap: 8px; cursor: pointer; color: var(--text-main); font-weight: 500; }
-        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border); }
+  useEffect(() => { 
+    const userSession = localStorage.getItem('stms_user');
+    if (userSession) setCurrentUser(JSON.parse(userSession));
+    fetchAllData(); 
+  }, []);
 
-        /* 📱 Mobile Responsive */
-        .mobile-header-left { display: none; }
-        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(2px); z-index: 1999; }
-        
-        @media (max-width: 768px) {
-            .mobile-header-left { display: flex; align-items: center; gap: 12px; }
-            .desktop-title { display: none; }
-            .topbar { padding: 16px; }
-            .user-details { display: none; } /* Hide user details on mobile topbar */
-            
-            .sidebar { position: fixed; top: 0; left: -280px; height: 100vh; z-index: 2000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-            .sidebar.open { left: 0; }
-            .sidebar-overlay.active { display: block; }
-            .content-area { padding: 16px; padding-bottom: 120px; height: calc(100vh - 70px); }
-            .card { padding: 20px; }
-            
-            #menu1-grid > .card { min-width: 100% !important; }
-            .tab-header { padding: 0 10px; justify-content: space-between; }
-            .tab-btn { padding: 12px; font-size: 14px; width: 50%; text-align: center; }
-            th, td { padding: 12px 10px !important; font-size: 13px !important; white-space: nowrap; }
-            
-            #menu2 .card > div:first-child { flex-direction: column; align-items: stretch; gap: 12px; }
-            #menu2 .card > div:first-child button, #menu2 .card > div:first-child select { width: 100%; margin: 0; }
-        }
-        
-        /* 🪄 SweetAlert Custom Font & Dark Mode Compatibility */
-        .swal2-popup { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif !important; border-radius: 1.25rem !important; }
-        html.dark .swal2-popup { background: var(--bg-surface); color: var(--text-main); }
-        html.dark .swal2-title, html.dark .swal2-html-container { color: var(--text-main); }
-    </style>
-</head>
-<body>
-    <!-- หน้าต่าง Login -->
-    <div id="loginSection">
-        <div class="login-box">
-            <h2 style="font-size: 28px;">STMS Survey</h2>
-            <p style="color: var(--text-muted); margin-bottom: 24px;">กรุณาเข้าสู่ระบบเพื่อจัดการพื้นที่</p>
-            <input type="text" id="userId" class="form-input" placeholder="รหัสผู้ใช้งาน (User ID)">
-            <input type="password" id="password" class="form-input" placeholder="รหัสผ่าน (Password)">
-            <button id="btnLogin" class="btn btn-primary btn-w-full" style="padding: 14px;" onclick="handleLogin()">เข้าสู่ระบบ</button>
-            <p id="loginError" style="color: var(--danger); display: none; font-size:14px; margin-top:16px; font-weight: 500;"></p>
-        </div>
-    </div>
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, activeTab]);
 
-    <!-- หน้าต่างระบบหลัก -->
-    <div id="mainApp">
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileMenu()"></div>
-        
-        <!-- Sidebar -->
-        <div class="sidebar" id="appSidebar">
-            <div class="sidebar-header">
-                <h3>QR Survey<br><span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">Contract Center UI</span></h3>
-            </div>
-            <div class="menu-list">
-                <div class="menu-item active" onclick="switchMenu('menu1', 'จัดการ QR แบบประเมิน')">📱 สร้างและจัดการ QR Code</div>
-                <div class="menu-item" onclick="switchMenu('menu2', 'Dashboard & Report')">📊 Dashboard & Report</div>
-                <div class="menu-item" id="navMenu3" onclick="switchMenu('menu3', 'User & Project Management')" style="display: none;">⚙️ User & Project Mgt</div>
-                <div class="menu-item" onclick="switchMenu('menu4', 'Logs ประวัติการทำงาน')">📝 Logs ประวัติการทำงาน</div>
-            </div>
-        </div>
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      let res, textData, result;
+      const requestPayload = { 
+        action: "getAllSystemData", 
+        secretKey: process.env.NEXT_PUBLIC_SECRET_KEY, 
+        payload: { sheets: ["customer_data", "contract_data", "operation_data"] } 
+      };
 
-        <!-- Content Area -->
-        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%;">
-            
-            <!-- 🔝 Top Navbar (Modern Layout) -->
-            <div class="topbar">
-                <!-- ฝั่งซ้าย: ปุ่มมือถือ + ชื่อหน้าปัจจุบัน -->
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div class="mobile-header-left">
-                        <button onclick="toggleMobileMenu()" class="btn btn-gray btn-sm" style="font-size: 20px; padding: 4px 10px;">☰</button>
-                    </div>
-                    <h2 id="pageTitle" class="desktop-title" style="margin:0; font-size: 20px; font-weight: 700; color: var(--text-main);">จัดการ QR แบบประเมิน</h2>
-                </div>
-                
-                <!-- ฝั่งขวา: Dark Mode + User Profile -->
-                <div class="topbar-right">
-                    <button class="theme-toggle" onclick="toggleTheme()" title="สลับโหมดมืด/สว่าง">
-                        <span id="themeIcon">☀️</span>
-                    </button>
-                    
-                    <div class="user-profile">
-                        <div class="user-details" style="text-align: right;">
-                            <div id="userNameDisplay" style="font-weight: 600; font-size: 14px; color: var(--text-main);">Name</div>
-                            <div id="userRoleDisplay" style="color:var(--text-muted); font-size:12px;">Role</div>
-                        </div>
-                        <div class="user-avatar" id="userAvatar">A</div>
-                        <button onclick="confirmLogout()" class="btn btn-danger btn-sm" style="margin-left: 8px;">ออก</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="content-area">
-                <!-- 📦 Menu 1 -->
-                <div id="menu1" class="content-section active">
-                    <div id="menu1-grid" style="display: flex; gap: 24px; flex-wrap: wrap;">
-                        <div class="card" style="flex: 1; min-width: 300px; max-height: max-content;">
-                            <h3 class="card-title">สร้าง QR Code พื้นที่ใหม่</h3>
-                            <select id="projectSelect" class="form-input" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
-                            <div id="zoneCreator" style="display: none;">
-                                <input type="text" id="zoneName" class="form-input" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
-                                <button id="btnCreateQR" class="btn btn-success btn-w-full" onclick="generateQR()">+ ยืนยันการสร้าง QR</button>
-                            </div>
-                            <div id="qrResult" style="display: none; margin-top: 24px; text-align: center; border: 1px dashed var(--border); padding: 24px; border-radius: 12px; background: var(--bg-sub);">
-                                <h4 id="qrTitle" style="margin-top:0; color: var(--primary); font-weight: 600;"></h4>
-                                <!-- ใส่กรอบสีขาวให้ QR Code เสมอ เพื่อให้อ่านออกใน Dark Mode -->
-                                <div style="display:inline-block; padding: 10px; background: white; border-radius: 8px; margin: 16px 0;">
-                                    <div id="qrcode"></div>
-                                </div>
-                                <input type="text" id="qrLink" class="form-input" readonly style="text-align:center; cursor: copy;" onclick="copyLink()">
-                                <button onclick="copyLink()" class="btn btn-gray btn-sm">🔗 คัดลอกลิงก์</button>
-                            </div>
-                        </div>
-                        
-                        <div class="card" style="flex: 2; min-width: 450px; overflow: hidden; padding: 0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border);">
-                                <h3 class="card-title" style="margin:0;">รายการโซนและ QR Code</h3>
-                                <button onclick="fetchZoneList()" class="btn btn-gray btn-sm">🔄 รีเฟรช</button>
-                            </div>
-                            <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-                                <table>
-                                    <thead><tr><th>รหัสโซน</th><th>ชื่อพื้นที่</th><th>สถานะ</th><th style="text-align: center;">จัดการ</th></tr></thead>
-                                    <tbody id="zoneTableBody"><tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลดข้อมูล...</td></tr></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 📊 Menu 2 -->
-                <div id="menu2" class="content-section">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 24px;">
-                        <div class="card" style="text-align: center; padding: 24px;">
-                            <h4 style="margin:0; color:var(--text-muted); font-weight: 500;">ทั้งหมด</h4>
-                            <h2 id="dashTotal" style="margin:12px 0 0; color:var(--primary); font-size: 40px; font-weight: 700; border:none; padding:0;">0</h2>
-                        </div>
-                        <div class="card" style="text-align: center; padding: 24px;">
-                            <h4 style="margin:0; color:var(--text-muted); font-weight: 500;">คะแนนเฉลี่ย</h4>
-                            <h2 id="dashAvg" style="margin:12px 0 0; color:var(--success); font-size: 40px; font-weight: 700; border:none; padding:0;">0.0</h2>
-                        </div>
-                        <div class="card" style="text-align: center; padding: 24px;">
-                            <h4 style="margin:0; color:var(--text-muted); font-weight: 500;">รอดำเนินการ (Pending)</h4>
-                            <h2 id="dashPending" style="margin:12px 0 0; color:var(--danger); font-size: 40px; font-weight: 700; border:none; padding:0;">0</h2>
-                        </div>
-                    </div>
-                    
-                    <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 20px 24px; background: var(--bg-sub); border-bottom: 1px solid var(--border);">
-                            <select id="filterProject" class="form-input" style="flex:1; min-width:180px; margin:0;" onchange="filterSurveys()"><option value="all">-- ทุกโครงการ --</option></select>
-                            <select id="filterRating" class="form-input" style="flex:1; min-width:160px; margin:0;" onchange="filterSurveys()">
-                                <option value="all">-- ทุกคะแนน --</option><option value="5">5 ดาว</option><option value="4">4 ดาว</option><option value="3">3 ดาว</option><option value="2">2 ดาว</option><option value="1">1 ดาว</option>
-                            </select>
-                            <select id="filterStatus" class="form-input" style="flex:1; min-width:160px; margin:0;" onchange="filterSurveys()">
-                                <option value="all">-- ทุกสถานะ --</option><option value="pending">รอดำเนินการ</option><option value="resolved">แก้ไขแล้ว</option>
-                            </select>
-                            
-                            <div style="display: flex; gap: 8px;">
-                                <button onclick="fetchSurveyData()" class="btn btn-gray">🔄</button>
-                                <button onclick="printDashboardReport()" class="btn btn-primary">🖨️ พิมพ์</button>
-                                <button onclick="exportDashboardCSV()" class="btn btn-success">📊 Export</button>
-                            </div>
-                        </div>
-                        <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-                            <table>
-                                <thead><tr><th>วัน-เวลา</th><th>โครงการ</th><th>พื้นที่ (โซน)</th><th style="text-align: center;">คะแนน</th><th>ข้อเสนอแนะ</th><th>สถานะ</th><th style="text-align: center;">จัดการ</th></tr></thead>
-                                <tbody id="surveyTableBody"><tr><td colspan="7" style="text-align: center; padding: 30px;">กำลังโหลดข้อมูล...</td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ⚙️ Menu 3 -->
-                <div id="menu3" class="content-section">
-                    <div class="card" style="padding: 0; overflow: hidden;">
-                        
-                        <div class="tab-header">
-                            <button class="tab-btn active" onclick="switchAdminTab('tab-users')">👥 จัดการผู้ใช้งาน (Users)</button>
-                            <button class="tab-btn" onclick="switchAdminTab('tab-projects')">🏢 จัดการโครงการ (Projects)</button>
-                        </div>
-                        
-                        <!-- Tab Users -->
-                        <div id="tab-users" class="tab-content active">
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border);">
-                                <h3 style="margin:0; font-size: 16px; color: var(--text-muted); font-weight: 500;">รายชื่อและสิทธิ์ผู้ใช้งานทั้งหมดในระบบ</h3>
-                                <button onclick="openUserModal()" class="btn btn-success btn-sm">+ เพิ่มผู้ใช้งาน</button>
-                            </div>
-                            <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-                                <table>
-                                    <thead><tr><th>User ID</th><th>ชื่อพนักงาน</th><th style="text-align:center;">สถานะ</th><th style="text-align:center;">จัดการ</th></tr></thead>
-                                    <tbody id="adminUserTable"><tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลด...</td></tr></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <!-- Tab Projects -->
-                        <div id="tab-projects" class="tab-content">
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border);">
-                                <h3 style="margin:0; font-size: 16px; color: var(--text-muted); font-weight: 500;">รายชื่อโครงการทั้งหมดที่เปิดให้บริการ</h3>
-                                <button onclick="openProjectModal()" class="btn btn-primary btn-sm">+ เพิ่มโครงการ</button>
-                            </div>
-                            <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-                                <table>
-                                    <thead><tr><th>รหัส</th><th>ชื่อโครงการ</th><th style="text-align:center;">สถานะ</th><th style="text-align:center;">จัดการ</th></tr></thead>
-                                    <tbody id="adminProjectTable"><tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลด...</td></tr></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 📝 Menu 4 -->
-                <div id="menu4" class="content-section">
-                    <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--bg-sub);">
-                            <h3 class="card-title" style="margin:0;">System Activity Logs</h3>
-                            <button id="btnRefreshLogs" onclick="fetchLogs()" class="btn btn-gray btn-sm">🔄 รีเฟรชข้อมูล</button>
-                        </div>
-                        <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-                            <table>
-                                <thead><tr><th>วัน-เวลา</th><th>ผู้ทำรายการ</th><th>โครงการ</th><th>การกระทำ (Action)</th><th>รายละเอียด</th></tr></thead>
-                                <tbody id="logsTableBody"><tr><td colspan="5" style="text-align: center; padding: 30px;">กำลังโหลดข้อมูล...</td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 🪟 Modals -->
-    <div id="modalProject" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModals()">✖</button>
-            <h3 id="modalProjectTitle" style="margin-top:0; color: var(--primary); font-size: 22px; font-weight: 700;">🏢 เพิ่มโครงการใหม่</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom: 20px;">ระบบจะสร้างรหัสโครงการให้อัตโนมัติ</p>
-            <label style="font-size: 14px; font-weight: 600; color: var(--text-main); display:block; margin-bottom:6px;">ชื่อโครงการ</label>
-            <input type="text" id="modalProjName" class="form-input" placeholder="ระบุชื่อโครงการ">
-            <button id="btnSaveProject" class="btn btn-primary btn-w-full" onclick="submitProjectModal()" style="padding: 12px; font-size: 16px;">บันทึกข้อมูล</button>
-        </div>
-    </div>
-
-    <div id="modalUser" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModals()">✖</button>
-            <h3 id="modalUserTitle" style="margin-top:0; color: var(--success); font-size: 22px; font-weight: 700;">👤 เพิ่มผู้ใช้งานใหม่</h3>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-                <input type="text" id="modalUserId" class="form-input" placeholder="รหัสผู้ใช้งาน (Username)">
-                <input type="text" id="modalUserName" class="form-input" placeholder="ชื่อ - นามสกุล">
-                <input type="password" id="modalUserPwd" class="form-input" placeholder="รหัสผ่าน">
-                <select id="modalUserRole" class="form-input" onchange="toggleProjectSelection()">
-                    <option value="staff">พนักงานทั่วไป (Staff)</option>
-                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
-                </select>
-                <div id="projectAssignmentSection" style="margin-top: 4px;">
-                    <label style="font-size: 14px; font-weight: 600; color: var(--text-main);">🔗 กำหนดสิทธิ์โครงการ</label>
-                    <div id="modalProjectCheckboxes" class="checkbox-group"></div>
-                </div>
-            </div>
-            <button id="btnSaveUser" class="btn btn-success btn-w-full" onclick="submitUserModal()" style="padding: 12px; font-size: 16px; margin-top: 8px;">บันทึกข้อมูลผู้ใช้</button>
-        </div>
-    </div>
-
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
-        let currentUser = null;
-
-        // 🌙 Dark Mode System
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            localStorage.setItem('stms_theme', isDark ? 'dark' : 'light');
-            document.getElementById('themeIcon').innerText = isDark ? '🌙' : '☀️';
-        }
-        
-        // 🚀 Initialize Theme
-        const savedTheme = localStorage.getItem('stms_theme');
-        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-            document.addEventListener("DOMContentLoaded", () => document.getElementById('themeIcon').innerText = '🌙');
-        }
-
-        // 🚀 SweetAlert Helpers
-        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
-        async function confirmAction(title, text, confirmText = 'ยืนยัน', isDanger = false) {
-            const result = await Swal.fire({
-                title: title, text: text, icon: 'warning', showCancelButton: true,
-                confirmButtonColor: isDanger ? '#ef4444' : '#2563eb', cancelButtonColor: '#6b7280',
-                confirmButtonText: confirmText, cancelButtonText: 'ยกเลิก'
-            });
-            return result.isConfirmed;
-        }
-
-        // 🚀 Session Timeout (30 นาที)
-        const SESSION_TIMEOUT = 30 * 60 * 1000; 
-        let inactivityTimer;
-        function resetTimer() {
-            if (!currentUser) return; 
-            clearTimeout(inactivityTimer);
-            localStorage.setItem('stms_last_activity', Date.now().toString()); 
-            inactivityTimer = setTimeout(() => {
-                Swal.fire({ title: 'เซสชันหมดอายุ', text: 'ไม่ได้ใช้งานเกิน 30 นาที กรุณาเข้าสู่ระบบใหม่', icon: 'info', confirmButtonText: 'ตกลง', confirmButtonColor: '#2563eb' }).then(() => { logout(); });
-            }, SESSION_TIMEOUT);
-        }
-        ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => document.addEventListener(evt, resetTimer, true));
-
-        window.addEventListener('load', () => {
-            const savedUser = localStorage.getItem('stms_user');
-            const lastActivity = localStorage.getItem('stms_last_activity');
-            if (savedUser && lastActivity) {
-                if (Date.now() - parseInt(lastActivity) < SESSION_TIMEOUT) {
-                    currentUser = JSON.parse(savedUser); setupApp();
-                } else {
-                    localStorage.removeItem('stms_user'); localStorage.removeItem('stms_last_activity');
-                }
-            }
+      try {
+        res = await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+          method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(requestPayload), redirect: "follow" 
         });
+        textData = await res.text();
+        result = JSON.parse(textData);
+      } catch (err) {
+        console.warn("Retrying fetch...");
+        await new Promise(r => setTimeout(r, 1000));
+        res = await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+          method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(requestPayload), redirect: "follow" 
+        });
+        textData = await res.text();
+        result = JSON.parse(textData);
+      }
 
-        async function safeFetch(url, options = {}) {
-            let retries = 3; let delay = 1000;
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) throw new Error("HTTP Error");
-                    return JSON.parse(await response.text());
-                } catch (error) {
-                    if (i === retries - 1) throw new Error("เซิร์ฟเวอร์ไม่ตอบสนอง");
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    delay += 1000;
-                }
-            }
+      if (result.success && result.data) {
+        const d = result.data;
+        if (d.customer_data && d.customer_data.length > 0) {
+          const rawCustRows = d.customer_data.map(obj => Object.values(obj));
+          const headerCustRow = Object.keys(d.customer_data[0]);
+          setCustomers([headerCustRow, ...rawCustRows]);
+        } else setCustomers([]);
+
+        if (d.contract_data && d.contract_data.length > 0) {
+          const rawContRows = d.contract_data.map(obj => Object.values(obj));
+          const headerContRow = Object.keys(d.contract_data[0]);
+          setContracts([headerContRow, ...rawContRows]);
+        } else setContracts([]);
+
+        if (d.operation_data && Array.isArray(d.operation_data)) {
+          setOperations(d.operation_data.map(obj => {
+            const arr = Object.values(obj);
+            return { id: arr[0], name: arr[1] };
+          }));
+        } else setOperations([]);
+      }
+    } catch (error) { console.error("Failed to fetch data:", error); }
+    setLoading(false);
+  };
+
+  const saveLog = async (action, targetTable, targetRecordId, description) => {
+    if (!currentUser) return;
+    try {
+      await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ 
+          action: "saveLog", 
+          secretKey: process.env.NEXT_PUBLIC_SECRET_KEY, 
+          payload: { userId: currentUser.userId, action, targetTable, targetRecordId, description } 
+        }),
+        redirect: "follow"
+      });
+    } catch (error) { console.error("Failed to save log:", error); }
+  };
+
+  const contractCountMap = useMemo(() => {
+    const map = {};
+    if (contracts.length > 1) {
+      contracts.slice(1).forEach(row => {
+        const cId = (row[2] || '').toString().trim();
+        const status = (row[11] || '').toString().trim().toLowerCase();
+        if (cId && status !== 'expired' && status !== 'lost') {
+          map[cId] = (map[cId] || 0) + 1;
         }
+      });
+    }
+    return map;
+  }, [contracts]);
+
+  const selectedCustomerContracts = useMemo(() => {
+    if (!selectedRow || contracts.length <= 1) return [];
+    const targetCustId = (selectedRow[0] || '').toString().trim();
+    return contracts.slice(1).filter(row => (row[2] || '').toString().trim() === targetCustId);
+  }, [selectedRow, contracts]);
+
+  const serviceMatrix = useMemo(() => {
+    const matrix = {};
+    if (customers.length > 1) {
+      customers.slice(1).forEach(c => {
+        const cId = (c[0] || '').toString().trim();
+        matrix[cId] = { name: c[1], ops: new Set() };
+      });
+    }
+    if (contracts.length > 1) {
+      contracts.slice(1).forEach(c => {
+        const cId = (c[2] || '').toString().trim();
+        const opId = (c[12] || '').toString().trim();
+        const status = (c[11] || '').toString().trim().toLowerCase();
+        const rawStatus = (c[18] || '').toString().trim().toLowerCase();
         
-        function toggleMobileMenu() {
-            document.getElementById('appSidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
+        const isLostOrExpired = status === 'expired' || status === 'lost' || rawStatus.includes('ยกเลิก') || rawStatus.includes('ไม่ต่อ');
+        if (matrix[cId] && !isLostOrExpired) {
+          matrix[cId].ops.add(opId);
+        }
+      });
+    }
+    return matrix;
+  }, [customers, contracts]);
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleOpenAddModal = () => {
+    let nextId = 'CUST-001';
+    if (customers.length > 1) {
+      const ids = customers.slice(1).map(row => row[0]?.startsWith('CUST-') ? parseInt(row[0].replace('CUST-', ''), 10) : 0).filter(num => !isNaN(num));
+      if (ids.length > 0) nextId = `CUST-${String(Math.max(...ids) + 1).padStart(3, '0')}`;
+    }
+    setFormData({ customerId: nextId, customerName: '', contactPerson: '', email: '', phone: '', address: '', taxId: '', status: 'Active' });
+    setIsEditMode(false); setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (row) => {
+    setFormData({
+      customerId: row[0] || '', customerName: row[1] || '', contactPerson: row[2] === '-' ? '' : (row[2] || ''),
+      email: row[3] === '-' ? '' : (row[3] || ''), phone: row[4] === '-' ? '' : (row[4] || ''),
+      address: row[5] === '-' ? '' : (row[5] || ''), taxId: row[6] === '-' ? '' : (row[6] || ''), status: row[7] || 'Active'
+    });
+    setIsEditMode(true); setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true); AlertLoading('กำลังบันทึกข้อมูล...'); 
+    const payloadData = {
+      "Customer ID": formData.customerId, "Customer Name": formData.customerName, "Contact Person": formData.contactPerson,
+      "Email": formData.email, "Phone": formData.phone, "Address": formData.address, "Tax ID": formData.taxId, "Status": formData.status
+    };
+    try {
+      const response = await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ 
+          action: "saveCustomer", 
+          secretKey: process.env.NEXT_PUBLIC_SECRET_KEY, 
+          payload: payloadData 
+        }), 
+        redirect: "follow"
+      });
+      const textResult = await response.text();
+      let result;
+      try { result = JSON.parse(textResult); } catch(err) { throw new Error("เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง"); }
+
+      if (result.success) {
+        await saveLog(isEditMode ? 'UPDATE' : 'CREATE', 'Customers', formData.customerId, `${isEditMode ? 'แก้ไข' : 'เพิ่ม'}ข้อมูลลูกค้า: ${formData.customerName} (${formData.customerId})`);
+        setIsModalOpen(false); fetchAllData(); AlertSuccess('บันทึกข้อมูลสำเร็จ!');
+      } else AlertError(result.error);
+    } catch (error) { AlertError("การเชื่อมต่อล้มเหลว: " + error.message); }
+    setIsSubmitting(false);
+  };
+
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') direction = 'descending';
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key) return <span className="text-slate-300 dark:text-slate-600 ml-1 opacity-50">↕</span>;
+    if (sortConfig.direction === 'ascending') return <span className="text-blue-600 dark:text-blue-400 ml-1">▲</span>;
+    return <span className="text-blue-600 dark:text-blue-400 ml-1">▼</span>;
+  };
+
+  const dataRows = customers.length > 1 ? customers.slice(1) : [];
+
+  const filteredCustomers = dataRows.filter(row => {
+    const statusCell = row[7] ? row[7].toString().trim() : 'Active';
+    const matchesStatus = statusFilter === 'ALL' || statusCell.toLowerCase() === statusFilter.toLowerCase();
+    const searchTerms = searchTerm.toLowerCase().trim().split(/\s+/);
+    const searchableText = row.map(cell => cell ? cell.toString().toLowerCase() : '').join(' ');
+    const matchesSearch = searchTerms.every(term => searchableText.includes(term));
+    return matchesStatus && matchesSearch;
+  });
+
+  const sortedCustomers = useMemo(() => {
+    let sortableItems = [...filteredCustomers];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        // 🌟 เรียงลำดับจำนวนสัญญา (Tab 1)
+        if (sortConfig.key === 'contractsCount') {
+          const countA = contractCountMap[(a[0] || '').toString().trim()] || 0;
+          const countB = contractCountMap[(b[0] || '').toString().trim()] || 0;
+          return sortConfig.direction === 'ascending' ? countA - countB : countB - countA;
         }
 
-        // 🚀 Switch Menu & Update Topbar Title
-        function switchMenu(targetMenuId, title = '') {
-            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            document.getElementById(targetMenuId).classList.add('active'); 
-            if(title) document.getElementById('pageTitle').innerText = title;
-            
-            const activeBtn = document.querySelector(`.menu-item[onclick*="${targetMenuId}"]`);
-            if (activeBtn) activeBtn.classList.add('active');
-            
-            if (window.innerWidth <= 768 && document.getElementById('appSidebar').classList.contains('open')) toggleMobileMenu();
-            
-            if (targetMenuId === 'menu1') fetchZoneList();
-            if (targetMenuId === 'menu2') fetchSurveyData();
-            if (targetMenuId === 'menu3') loadAdminTables();  
-            if (targetMenuId === 'menu4') fetchLogs();
+        // 🌟 เรียงลำดับชื่อลูกค้า (Tab 2 - Gaps)
+        if (sortConfig.key === 'customerNameGaps') {
+          let aVal = a[1]?.toString().toLowerCase() || '';
+          let bVal = b[1]?.toString().toLowerCase() || '';
+          if (aVal < bVal) return sortConfig.direction === 'ascending' ? -1 : 1;
+          if (aVal > bVal) return sortConfig.direction === 'ascending' ? 1 : -1;
+          return 0;
         }
 
-        async function handleLogin() {
-            const uid = document.getElementById('userId').value; const pwd = document.getElementById('password').value;
-            const btn = document.getElementById('btnLogin');
-            btn.innerText = 'กำลังตรวจสอบ...'; btn.disabled = true;
-            try {
-                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', user_id: uid, password: pwd }) });
-                if (result.status === 'success') { 
-                    currentUser = result.user; 
-                    localStorage.setItem('stms_user', JSON.stringify(currentUser));
-                    localStorage.setItem('stms_last_activity', Date.now().toString());
-                    Toast.fire({ icon: 'success', title: `ยินดีต้อนรับ ${currentUser.name}` });
-                    setupApp(); 
-                } else { Swal.fire({ title: 'เข้าสู่ระบบล้มเหลว', text: result.message, icon: 'error', confirmButtonColor: '#ef4444' }); }
-            } catch (err) { Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error'); } 
-            finally { btn.innerText = 'เข้าสู่ระบบ'; btn.disabled = false; }
+        // 🌟 เรียงลำดับตามสถานะบริการ (Active/Gap) (Tab 2 - Gaps)
+        if (operations.some(op => op.id === sortConfig.key)) {
+          const opId = sortConfig.key;
+          const aHas = serviceMatrix[(a[0] || '').toString().trim()]?.ops.has(opId) ? 1 : 0;
+          const bHas = serviceMatrix[(b[0] || '').toString().trim()]?.ops.has(opId) ? 1 : 0;
+          if (aHas < bHas) return sortConfig.direction === 'ascending' ? -1 : 1;
+          if (aHas > bHas) return sortConfig.direction === 'ascending' ? 1 : -1;
+          
+          // ถ้าสถานะเหมือนกัน ให้เรียงชื่อตามตัวอักษรแทน
+          let aName = a[1]?.toString().toLowerCase() || '';
+          let bName = b[1]?.toString().toLowerCase() || '';
+          if (aName < bName) return sortConfig.direction === 'ascending' ? -1 : 1;
+          if (aName > bName) return sortConfig.direction === 'ascending' ? 1 : -1;
+          return 0;
         }
 
-        function setupApp() {
-            document.getElementById('loginSection').style.display = 'none'; 
-            document.getElementById('mainApp').style.display = 'flex'; 
-            
-            // อัปเดตข้อมูลบน Top Navbar
-            document.getElementById('userNameDisplay').innerText = currentUser.name; 
-            document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
-            document.getElementById('userAvatar').innerText = currentUser.name.charAt(0).toUpperCase();
-            
-            document.getElementById('navMenu3').style.display = (currentUser.role === 'admin') ? 'flex' : 'none';
-            switchMenu('menu1', 'จัดการ QR แบบประเมิน');
-            fetchProjects(); resetTimer();
-        }
+        // 🌟 การเรียงลำดับพื้นฐานคอลัมน์อื่นๆ
+        let aVal = a[sortConfig.key]?.toString().toLowerCase() || '';
+        let bVal = b[sortConfig.key]?.toString().toLowerCase() || '';
+        if (aVal < bVal) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredCustomers, sortConfig, contractCountMap, serviceMatrix, operations]);
 
-        async function confirmLogout() { if(await confirmAction('ยืนยัน', 'ต้องการออกจากระบบใช่หรือไม่?', 'ออกจากระบบ', true)) logout(); }
+  const totalPages = Math.ceil(sortedCustomers.length / itemsPerPage);
+  const paginatedCustomers = sortedCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-        function logout() { 
-            currentUser = null; clearTimeout(inactivityTimer);
-            localStorage.removeItem('stms_user'); localStorage.removeItem('stms_last_activity');
-            document.getElementById('loginSection').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; 
-            document.getElementById('userId').value = ''; document.getElementById('password').value = ''; 
-            document.getElementById('zoneTableBody').innerHTML = ''; document.getElementById('surveyTableBody').innerHTML = '';
-            document.getElementById('adminProjectTable').innerHTML = ''; document.getElementById('adminUserTable').innerHTML = '';
-            document.getElementById('logsTableBody').innerHTML = '';
-            allSurveys = []; allGlobalProjects = [];
-            document.getElementById('dashTotal').innerText = '0'; document.getElementById('dashAvg').innerText = '0.0'; document.getElementById('dashPending').innerText = '0';
-            document.getElementById('zoneCreator').style.display = 'none'; document.getElementById('qrResult').style.display = 'none';
-        }
+  const handleOpenDetail = (row) => {
+    const idx = sortedCustomers.findIndex(r => r[0] === row[0]);
+    setSelectedRowIndex(idx); setSelectedRow(row); setIsDetailModalOpen(true);
+  };
 
-        // --- Menu 1 ---
-        async function fetchProjects() {
-            try {
-                const result = await safeFetch(`${API_URL}?action=getProjects`);
-                const select = document.getElementById('projectSelect'); select.innerHTML = '<option value="">-- เลือกโครงการ --</option>';
-                if (result.status === 'success') {
-                    const allowedProjects = currentUser.role === 'admin' ? result.data : result.data.filter(p => currentUser.projects.includes(p.project_id));
-                    allowedProjects.forEach(p => { const option = document.createElement('option'); option.value = p.project_id; option.innerText = p.project_name; select.appendChild(option); });
-                }
-                fetchZoneList(); 
-            } catch(e) {}
-        }
-        function loadZones() { document.getElementById('zoneCreator').style.display = document.getElementById('projectSelect').value ? 'block' : 'none'; fetchZoneList(); }
+  const handleNextDetail = () => {
+    if (selectedRowIndex !== null && selectedRowIndex < sortedCustomers.length - 1) {
+      const nextIndex = selectedRowIndex + 1;
+      setSelectedRowIndex(nextIndex); setSelectedRow(sortedCustomers[nextIndex]);
+    }
+  };
+
+  const handlePrevDetail = () => {
+    if (selectedRowIndex !== null && selectedRowIndex > 0) {
+      const prevIndex = selectedRowIndex - 1;
+      setSelectedRowIndex(prevIndex); setSelectedRow(sortedCustomers[prevIndex]);
+    }
+  };
+
+  const exportGapsToCSV = () => {
+    if (sortedCustomers.length === 0) {
+      AlertError("ไม่มีข้อมูลสำหรับส่งออก");
+      return;
+    }
+    let csvContent = "\uFEFF";
+
+    const baseHeaders = ["Customer ID", "ชื่อบริษัท", "สถานะระบบ"];
+    const opHeaders = operations.map(op => op.id);
+    const allHeaders = [...baseHeaders, ...opHeaders];
+    csvContent += allHeaders.join(",") + "\n";
+
+    sortedCustomers.forEach(row => {
+      const custId = (row[0] || '').toString().trim();
+      const custName = (row[1] || '').toString().replace(/,/g, ' '); 
+      const status = (row[7] || 'Active').toString().trim();
+      const custMatrix = serviceMatrix[custId] || { ops: new Set() };
+
+      const rowData = [custId, `"${custName}"`, status];
+      operations.forEach(op => {
+        const hasService = custMatrix.ops.has(op.id);
+        rowData.push(hasService ? "Active" : "Gap");
+      });
+      
+      csvContent += rowData.join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `STMS_Service_Gaps_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const canManageData = currentUser && currentUser.role !== 'MD';
+
+  if (loading) return <div className="flex items-center justify-center min-h-[400px]"><div className="p-8 text-center text-slate-500 dark:text-slate-400 animate-pulse text-lg font-bold">กำลังโหลดข้อมูลลูกค้า...</div></div>;
+
+  return (
+    <div className="relative animate-fadeIn">
+      
+      <div className="flex overflow-x-auto space-x-2 mb-6 bg-slate-200/50 dark:bg-slate-800 p-1.5 rounded-2xl transition-colors">
+        <button onClick={() => setActiveTab('list')} className={`flex-1 flex items-center justify-center py-2.5 px-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'list' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          รายชื่อลูกค้า ({dataRows.length})
+        </button>
+        <button onClick={() => setActiveTab('gaps')} className={`flex-1 flex items-center justify-center py-2.5 px-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'gaps' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          วิเคราะห์โอกาส (Service Gaps)
+        </button>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          {activeTab === 'list' && (
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full sm:w-44 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm shadow-sm h-10 transition-colors">
+              <option value="ALL">สถานะทั้งหมด</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          )}
+          <div className="relative w-full sm:w-80">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
+            <input type="text" placeholder="ค้นหาลูกค้ารายบริษัท..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm shadow-sm h-10 transition-colors"/>
+          </div>
+        </div>
         
-        async function generateQR() { 
-            const zoneName = document.getElementById('zoneName').value.trim(); const projectId = document.getElementById('projectSelect').value;
-            if (!zoneName) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อพื้นที่', 'warning');
-            const btn = document.getElementById('btnCreateQR'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
-            try {
-                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createZone', project_id: projectId, zone_name: zoneName, actor_id: currentUser.user_id }) });
-                if(result.status === 'success') {
-                    Toast.fire({ icon: 'success', title: 'สร้าง QR Code สำเร็จ' });
-                    const surveyUrl = `https://stms-survey-a-pi.vercel.app/survey?zone=${result.new_zone_id}`;
-                    document.getElementById('qrTitle').innerText = `โซน: ${zoneName} (${result.new_zone_id})`; document.getElementById('qrLink').value = surveyUrl;
-                    document.getElementById('qrcode').innerHTML = ""; new QRCode(document.getElementById('qrcode'), { text: surveyUrl, width: 150, height: 150, colorDark : "#000", colorLight : "#fff" });
-                    document.getElementById('qrResult').style.display = 'block'; document.getElementById('zoneName').value = ''; fetchZoneList(); 
-                } else { Swal.fire('ข้อผิดพลาด', result.message, 'error'); }
-            } catch(e) { Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'); } finally { btn.innerText = "+ ยืนยันการสร้าง QR"; btn.disabled = false; }
-        }
-        
-        function copyLink() { const el = document.getElementById('qrLink'); el.select(); document.execCommand("copy"); Toast.fire({ icon: 'success', title: 'คัดลอกลิงก์เรียบร้อย' }); }
-        function copySpecificLink(url) { const tempInput = document.createElement("input"); tempInput.value = url; document.body.appendChild(tempInput); tempInput.select(); document.execCommand("copy"); document.body.removeChild(tempInput); Toast.fire({ icon: 'success', title: 'คัดลอกลิงก์เรียบร้อย' }); }
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+          {activeTab === 'gaps' && (
+            <button onClick={exportGapsToCSV} className="h-10 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-4 rounded-xl shadow-sm transition flex items-center justify-center text-sm font-medium whitespace-nowrap min-w-[120px]">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
+              Export CSV
+            </button>
+          )}
+          {activeTab === 'list' && canManageData && (
+            <button onClick={handleOpenAddModal} className="h-10 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-4 rounded-xl shadow-sm transition flex items-center justify-center text-sm font-medium whitespace-nowrap min-w-[120px]">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+              เพิ่มลูกค้าใหม่
+            </button>
+          )}
+        </div>
+      </div>
 
-        async function fetchZoneList() {
-            const tableBody = document.getElementById('zoneTableBody'); tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลดข้อมูล...</td></tr>';
-            const selectedProject = document.getElementById('projectSelect').value; let url = `${API_URL}?action=getZones`; if (selectedProject) url += `&project_id=${selectedProject}`;
-            try {
-                const result = await safeFetch(url); tableBody.innerHTML = ''; 
-                if (result.status === 'success' && result.data.length > 0) {
-                    let allowedZones = result.data; 
-                    if (currentUser.role !== 'admin') allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
-                    if (allowedZones.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">ไม่พบข้อมูลโซน</td></tr>'; return; }
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col min-h-[500px] transition-colors">
+        <div className="p-0 overflow-x-auto flex-grow w-full">
+          
+          {/* 🌟 Tab 1: ตารางรายชื่อลูกค้าปกติ */}
+          {activeTab === 'list' && (
+            dataRows.length > 0 ? (
+              <table className="w-full text-left table-fixed min-w-[850px]">
+                <thead>
+                  <tr className="bg-slate-50/70 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-100 dark:border-slate-700 select-none transition-colors">
+                    <th className="p-4 w-[13%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(0)}>Customer ID {renderSortIcon(0)}</th>
+                    <th className="p-4 w-[26%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(1)}>ชื่อบริษัท {renderSortIcon(1)}</th>
+                    <th className="p-4 w-[15%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(2)}>ผู้ติดต่อ {renderSortIcon(2)}</th>
+                    <th className="p-4 w-[13%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(4)}>เบอร์โทรศัพท์ {renderSortIcon(4)}</th>
+                    <th className="p-4 w-[9%] text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort('contractsCount')}>สัญญา {renderSortIcon('contractsCount')}</th>
+                    <th className="p-4 w-[9%] text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(7)}>สถานะ {renderSortIcon(7)}</th>
+                    <th className="p-4 w-[7%] text-center">เปิดดู</th>
+                    {canManageData && <th className="p-4 w-[8%] text-center">จัดการ</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                  {paginatedCustomers.length > 0 ? (
+                    paginatedCustomers.map((row, rowIndex) => {
+                      const custId = (row[0] || '').toString().trim();
+                      const cCount = contractCountMap[custId] || 0;
+                      const statusText = row[7]?.trim() || 'Active';
+                      return (
+                        <tr key={rowIndex} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                          <td className="p-4 text-slate-700 dark:text-slate-300 text-xs font-bold"><div className="truncate" title={row[0]}>{row[0]}</div></td>
+                          <td className="p-4 text-slate-800 dark:text-slate-100 text-sm font-bold"><div className="truncate" title={row[1]}>{row[1]}</div></td>
+                          <td className="p-4 text-slate-600 dark:text-slate-400 text-sm"><div className="truncate" title={row[2]}>{row[2] || '-'}</div></td>
+                          <td className="p-4 text-slate-600 dark:text-slate-400 text-sm"><div className="truncate" title={row[4]}>{row[4] || '-'}</div></td>
+                          <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-xs font-bold ${cCount > 0 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>{cCount} ฉบับ</span></td>
+                          <td className="p-4 text-sm text-center"><span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase inline-block ${statusText === 'Active' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}>{statusText}</span></td>
+                          <td className="p-4 text-center"><button onClick={() => handleOpenDetail(row)} className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/30 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-600 dark:hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="ดูรายละเอียด"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button></td>
+                          {canManageData && (
+                            <td className="p-4 text-center">
+                              <button onClick={() => handleOpenEditModal(row)} className="p-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/30 rounded-lg border border-emerald-100 dark:border-emerald-800/50 hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="แก้ไข"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })
+                  ) : ( <tr><td colSpan={canManageData ? "8" : "7"} className="p-8 text-slate-400 dark:text-slate-500 text-center text-sm">ไม่พบข้อมูลลูกค้าที่ตรงกับเงื่อนไขการค้นหา</td></tr> )}
+                </tbody>
+              </table>
+            ) : ( <div className="p-8 text-slate-400 dark:text-slate-500 text-center text-sm">ยังไม่มีข้อมูลลูกค้าในระบบ</div> )
+          )}
+
+          {/* 🌟 Tab 2: ตารางวิเคราะห์โอกาส Service Gaps พร้อมฟีเจอร์จัดเรียง */}
+          {activeTab === 'gaps' && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left table-auto min-w-[900px]">
+                <thead>
+                  <tr className="bg-slate-50/70 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-700 select-none">
+                    <th className="p-4 w-[30%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort('customerNameGaps')}>
+                      ข้อมูลบริษัท / ลูกค้า {renderSortIcon('customerNameGaps')}
+                    </th>
+                    {operations.map(op => (
+                      <th key={op.id} className="p-4 text-center w-[12%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(op.id)}>
+                        <span title={op.name}>{op.id}</span> {renderSortIcon(op.id)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                  {paginatedCustomers.map((row, rowIndex) => {
+                    const custId = (row[0] || '').toString().trim();
+                    const custMatrix = serviceMatrix[custId] || { ops: new Set() };
                     
-                    allowedZones.forEach(zone => {
-                        const tr = document.createElement('tr');
-                        const surveyUrl = `https://stms-survey-a-pi.vercel.app/survey?zone=${zone.zone_id}`;
-                        const badge = zone.is_active ? '<span class="badge badge-green">ใช้งาน</span>' : '<span class="badge badge-red">ระงับ</span>';
-                        tr.innerHTML = `
-                            <td><span style="font-weight:600; color:var(--primary);">${zone.zone_id}</span></td>
-                            <td>${zone.zone_name}</td>
-                            <td>${badge}</td>
-                            <td style="text-align: center;">
-                                <div style="display:flex; justify-content:center; gap:6px;">
-                                    <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" class="btn btn-primary btn-sm">🖨️ พิมพ์</button>
-                                    <button onclick="copySpecificLink('${surveyUrl}')" class="btn btn-gray btn-sm">🔗 ลิงก์</button>
-                                    <button onclick="deleteZone('${zone.zone_id}')" class="btn btn-danger btn-sm">🗑️ ลบ</button>
+                    return (
+                      <tr key={rowIndex} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td className="p-4">
+                          <div className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate" title={row[1]}>{row[1]}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{custId}</div>
+                        </td>
+                        {operations.map(op => {
+                          const hasService = custMatrix.ops.has(op.id);
+                          return (
+                            <td key={op.id} className="p-4 text-center">
+                              {hasService ? (
+                                <div className="inline-flex items-center justify-center p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-200 dark:border-emerald-800" title={`ใช้งาน ${op.id} แล้ว`}>
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
-                            </td>`;
-                        tableBody.appendChild(tr);
-                    });
-                } else { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">ยังไม่มีข้อมูล</td></tr>'; }
-            } catch (error) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--danger);">อินเทอร์เน็ตมีปัญหา โปรดรีเฟรช</td></tr>'; }
-        }
+                              ) : (
+                                <div className="inline-flex items-center justify-center p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 rounded-lg border border-slate-200 dark:border-slate-700 border-dashed" title={`โอกาสเสนอขาย ${op.id}`}>
+                                  <span className="text-[10px] font-black tracking-wider uppercase">Gap</span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                  {paginatedCustomers.length === 0 && (
+                    <tr><td colSpan={operations.length + 1} className="p-8 text-slate-400 dark:text-slate-500 text-center text-sm">ไม่พบข้อมูลลูกค้า</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-        function printQR(zoneId, zoneName, url) {
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`<html><head><title>Print QR - ${zoneName}</title><style>body { font-family: sans-serif; text-align: center; padding: 50px; } #qr-container { display: flex; justify-content: center; margin-top:20px; }</style><scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr` + `ipt></head><body><h2>สแกนเพื่อประเมินความพึงพอใจ</h2><h3>จุดบริการ: ${zoneName} (${zoneId})</h3><div id="qr-container"></div><scr` + `ipt>new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 }); setTimeout(() => { window.print(); }, 500);</scr` + `ipt></body></html>`);
-            printWindow.document.close();
-        }
-        async function deleteZone(zoneId) { if(await confirmAction('รอการอัปเดต', 'ระบบลบโซน จะพัฒนาในเฟสถัดไปครับ', 'รับทราบ', false)) {} }
+        </div>
 
-        // --- Menu 2 ---
-        let allSurveys = []; let currentFilteredSurveys = []; 
-        async function fetchSurveyData() {
-            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>';
-            try {
-                const result = await safeFetch(`${API_URL}?action=getSurveyResults`);
-                if (result.status === 'success') {
-                    allSurveys = (currentUser.role === 'admin') ? result.data : result.data.filter(s => currentUser.projects.includes(s.project_id));
-                    const selectProj = document.getElementById('filterProject'); selectProj.innerHTML = '<option value="all">-- ทุกโครงการ --</option>';
-                    Array.from(document.getElementById('projectSelect').options).slice(1).forEach(opt => { const newOpt = document.createElement('option'); newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectProj.appendChild(newOpt); });
-                    filterSurveys(); 
-                } else { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color:var(--danger);">${result.message}</td></tr>`; }
-            } catch (error) { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color:var(--danger);">เชื่อมต่อล้มเหลว</td></tr>`; }
-        }
-        
-        function filterSurveys() {
-            const pFilter = document.getElementById('filterProject').value; const rFilter = document.getElementById('filterRating').value; const sFilter = document.getElementById('filterStatus').value;
-            const filtered = allSurveys.filter(s => (pFilter === 'all' || String(s.project_id) === String(pFilter)) && (rFilter === 'all' || String(s.rating) === String(rFilter)) && (sFilter === 'all' || String(s.status) === String(sFilter)));
-            currentFilteredSurveys = filtered; renderSurveys(filtered); updateDashboardCards(filtered);
-        }
-        
-        function renderSurveys(data) {
-            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '';
-            if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color:var(--text-muted);">ไม่พบข้อมูลประเมินในระบบ</td></tr>'; return; }
-            data.forEach(item => {
-                const tr = document.createElement('tr');
-                const d = new Date(item.created_at); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                const statusHtml = item.status === 'pending' ? `<span class="badge badge-yellow">รอดำเนินการ</span>` : `<span class="badge badge-green">แก้ไขแล้ว</span>`;
-                const actionBtn = item.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="markAsResolved('${item.survey_id}')">✅ แก้ไข</button>` : `<span style="color:var(--text-muted); font-size:12px; font-weight:600;">เสร็จสิ้น</span>`;
+        {!loading && sortedCustomers.length > 0 && (
+          <div className="border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80 p-4 flex items-center justify-between flex-shrink-0 transition-colors">
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">แสดงข้อมูล {((currentPage - 1) * itemsPerPage) + 1} ถึง {Math.min(currentPage * itemsPerPage, sortedCustomers.length)} จากทั้งหมด {sortedCustomers.length} รายการ</span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className={`px-3 py-1.5 rounded-lg border text-sm font-bold transition-colors ${currentPage === 1 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border-transparent' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}>ก่อนหน้า</button>
+              <div className="flex items-center gap-1 px-2">
+                {Array.from({ length: Math.min(5, totalPages) }).map((_, idx) => {
+                  let pageNum;
+                  if (totalPages <= 5) pageNum = idx + 1; else if (currentPage <= 3) pageNum = idx + 1; else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + idx; else pageNum = currentPage - 2 + idx;
+                  return ( <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-lg text-sm font-bold transition flex items-center justify-center ${currentPage === pageNum ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>{pageNum}</button> );
+                })}
+              </div>
+              <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className={`px-3 py-1.5 rounded-lg border text-sm font-bold transition-colors ${currentPage === totalPages ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border-transparent' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}>ถัดไป</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 🌟 Detail Modal */}
+      {isDetailModalOpen && selectedRow && (
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-700 transform transition-all max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between flex-shrink-0 bg-slate-50/50 dark:bg-slate-800">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">รายละเอียดลูกค้า</h3>
+                <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-xs font-bold">{selectedRowIndex + 1} / {sortedCustomers.length}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={handlePrevDetail} disabled={selectedRowIndex === 0} className={`p-2 rounded-xl transition-all ${selectedRowIndex === 0 ? 'text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800 cursor-not-allowed' : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50'}`} title="ลูกค้าก่อนหน้า"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button onClick={handleNextDetail} disabled={selectedRowIndex === sortedCustomers.length - 1} className={`p-2 rounded-xl transition-all ${selectedRowIndex === sortedCustomers.length - 1 ? 'text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800 cursor-not-allowed' : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50'}`} title="ลูกค้าถัดไป"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 p-2 rounded-full hover:bg-rose-50 dark:hover:bg-slate-700 transition"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4 text-sm text-slate-600 dark:text-slate-300 overflow-y-auto flex-grow custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex bg-blue-50/60 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800/50"><span className="w-28 font-semibold text-blue-700 dark:text-blue-400 flex-shrink-0">Customer ID:</span><span className="font-black text-blue-800 dark:text-blue-300 break-all">{selectedRow[0]}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">สถานะ:</span><span className={`font-bold ${(selectedRow[7]?.trim() || 'Active') === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{selectedRow[7] || 'Active'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600 md:col-span-2"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">ชื่อบริษัท:</span><span className="font-bold text-slate-800 dark:text-slate-100 break-words">{selectedRow[1]}</span></div>
                 
-                tr.innerHTML = `
-                    <td>${dateStr}</td>
-                    <td><span style="font-weight:600; color:var(--primary);">${item.project_name || '-'}</span></td>
-                    <td>${item.zone_name}<br><small style="color:var(--text-muted);">${item.zone_id}</small></td>
-                    <td style="text-align: center; font-size:12px;">${'⭐'.repeat(parseInt(item.rating) || 0)}<br>(${item.rating})</td>
-                    <td>${item.feedback || '-'}</td>
-                    <td style="text-align:center;">${statusHtml}</td>
-                    <td style="text-align: center;">${actionBtn}</td>
-                `;
-                tableBody.appendChild(tr);
-            });
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">ผู้ติดต่อ:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-words">{selectedRow[2] || '-'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">เบอร์โทรศัพท์:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-all">{selectedRow[4] || '-'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">อีเมล:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-all">{selectedRow[3] || '-'}</span></div>
+                
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">Tax ID:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-all">{selectedRow[6] || '-'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600 md:col-span-2"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">ที่อยู่:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-words">{selectedRow[5] || '-'}</span></div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-700 mt-4">
+                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                  <span>โอกาสการขาย / บริการที่ใช้งาน (Service Matrix)</span>
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {operations.map(op => {
+                    const hasService = serviceMatrix[selectedRow[0]]?.ops.has(op.id);
+                    return (
+                      <div key={op.id} className={`flex flex-col items-center justify-center p-3 rounded-xl border w-24 transition-colors ${hasService ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 border-dashed opacity-70'}`}>
+                        <span className={`text-sm font-black mb-1 ${hasService ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>{op.id}</span>
+                        {hasService ? (
+                          <span className="text-[9px] uppercase font-bold text-emerald-700 dark:text-emerald-500 tracking-wider bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded">Active</span>
+                        ) : (
+                          <span className="text-[9px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded">Gap</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-700 mt-4">
+                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">สัญญาที่ผูกกับลูกค้ารายนี้ ({selectedCustomerContracts.length} ฉบับ)</h4>
+                {selectedCustomerContracts.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {selectedCustomerContracts.map((c, i) => {
+                      const val = c[8] && !isNaN(Number(String(c[8]).replace(/,/g, ''))) ? Number(String(c[8]).replace(/,/g, '')).toLocaleString() : '0';
+                      const isLostOrExpired = ['expired', 'lost', 'ยกเลิก', 'ไม่ต่อ'].some(kw => (c[11]||'').toString().toLowerCase().includes(kw) || (c[18]||'').toString().toLowerCase().includes(kw));
+                      
+                      return (
+                        <div key={i} className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs transition-colors ${isLostOrExpired ? 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 opacity-75' : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600'}`}>
+                          <div>
+                            <span className="font-bold text-blue-700 dark:text-blue-400 mr-2">{c[0]}</span>
+                            <span className={`font-semibold ${isLostOrExpired ? 'text-slate-500 dark:text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>{c[1] || c[4] || '-'}</span>
+                            <span className={`ml-2 px-2 py-0.5 rounded font-bold text-[10px] ${isLostOrExpired ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'}`}>{c[12] || '-'}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-right">
+                            <span className="text-slate-500 dark:text-slate-400">{c[6] || '-'} ถึง {c[7] || '-'}</span>
+                            <span className={`font-bold whitespace-nowrap ${isLostOrExpired ? 'text-slate-400 dark:text-slate-500' : 'text-emerald-600 dark:text-emerald-400'}`}>฿{val}/เดือน</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : ( <div className="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl text-center text-xs font-medium text-slate-400 dark:text-slate-500">ยังไม่มีสัญญาผูกกับลูกค้ารายนี้</div> )}
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center flex-shrink-0 bg-slate-50/50 dark:bg-slate-800 transition-colors">
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline-block">ใช้ปุ่ม <span className="px-1.5 py-0.5 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded text-slate-600 dark:text-slate-300">{'<'}</span> <span className="px-1.5 py-0.5 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded text-slate-600 dark:text-slate-300">{'>'}</span> ด้านบนเพื่อเลื่อนดูลูกค้าถัดไป</span>
+              <button onClick={() => setIsDetailModalOpen(false)} className="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-xl transition-colors w-full sm:w-auto">ปิดหน้าต่าง</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Add/Edit Modal (ฟอร์มเพิ่ม/แก้ไขลูกค้า) --- */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-700 transform transition-all max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><svg className="w-6 h-6 text-blue-600 dark:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>{isEditMode ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่'}</h2>
+              <button onClick={() => setIsModalOpen(false)} disabled={isSubmitting} className={`p-2 rounded-full transition-colors ${isSubmitting ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div className="overflow-y-auto flex-grow custom-scrollbar pr-2 pb-2">
+              <form id="customer-form" onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Customer ID {isEditMode ? '(ล็อกรหัส)' : '(แก้ไขเป็นรหัสบัญชีได้)'}</label>
+                    <input required readOnly={isEditMode} name="customerId" value={formData.customerId} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isEditMode || isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100'}`} placeholder="เช่น CUST-001 หรือ PPG-0009"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ชื่อบริษัท / ชื่อลูกค้า <span className="text-rose-500">*</span></label>
+                    <input required type="text" name="customerName" value={formData.customerName} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="ระบุชื่อบริษัท..."/>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-600">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ผู้ติดต่อ (Contact Person)</label>
+                    <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="ชื่อผู้ติดต่อ..."/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">เบอร์โทรศัพท์ (Phone)</label>
+                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="02-xxx-xxxx"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">อีเมล (Email)</label>
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="example@email.com"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
+                    <input type="text" name="taxId" value={formData.taxId} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="เลข 13 หลัก"/>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ที่อยู่จดทะเบียน (Address)</label>
+                  <textarea name="address" value={formData.address} onChange={handleChange} rows="2" disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="ที่อยู่สำหรับออกใบกำกับภาษี..."></textarea>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">สถานะระบบ (Status)</label>
+                  <select name="status" value={formData.status} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400'}`}>
+                    <option value="Active">🟢 Active (กำลังใช้งาน)</option>
+                    <option value="Inactive">⚪ Inactive (ระงับชั่วคราว)</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div className="flex justify-end space-x-3 pt-5 border-t border-slate-100 dark:border-slate-700 mt-2 flex-shrink-0">
+              <button type="button" onClick={() => setIsModalOpen(false)} disabled={isSubmitting} className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-colors ${isSubmitting ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed' : 'text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>ยกเลิก</button>
+              <button type="button" onClick={() => { const form = document.getElementById('customer-form'); if(form) form.requestSubmit(); }} disabled={isSubmitting} className={`px-8 py-2.5 text-sm font-bold text-white rounded-xl shadow-sm transition-colors flex items-center ${isSubmitting ? 'bg-blue-400 dark:bg-blue-600 cursor-wait' : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500'}`}>
+                {isSubmitting && <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
+                {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูลลูกค้า'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .animate-fadeIn { animation: fadeIn 0.3s ease-in-out; } 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 20px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(75, 85, 99, 0.5); }
+      `}</style>
+    </div>
+  );
+}"use client";
+import { useEffect, useState, useMemo } from 'react';
+import { AlertSuccess, AlertError, AlertLoading, AlertConfirm } from '@/utils/alerts';
+
+export default function Customers() {
+  const [customers, setCustomers] = useState([]);
+  const [contracts, setContracts] = useState([]);
+  const [operations, setOperations] = useState([]); 
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null); 
+  
+  const [activeTab, setActiveTab] = useState('list'); 
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
+
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    customerId: '', customerName: '', contactPerson: '', 
+    email: '', phone: '', address: '', taxId: '', status: 'Active'
+  });
+
+  useEffect(() => { 
+    const userSession = localStorage.getItem('stms_user');
+    if (userSession) setCurrentUser(JSON.parse(userSession));
+    fetchAllData(); 
+  }, []);
+
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, activeTab]);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      let res, textData, result;
+      const requestPayload = { 
+        action: "getAllSystemData", 
+        secretKey: process.env.NEXT_PUBLIC_SECRET_KEY, 
+        payload: { sheets: ["customer_data", "contract_data", "operation_data"] } 
+      };
+
+      try {
+        res = await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+          method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(requestPayload), redirect: "follow" 
+        });
+        textData = await res.text();
+        result = JSON.parse(textData);
+      } catch (err) {
+        console.warn("Retrying fetch...");
+        await new Promise(r => setTimeout(r, 1000));
+        res = await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+          method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(requestPayload), redirect: "follow" 
+        });
+        textData = await res.text();
+        result = JSON.parse(textData);
+      }
+
+      if (result.success && result.data) {
+        const d = result.data;
+        if (d.customer_data && d.customer_data.length > 0) {
+          const rawCustRows = d.customer_data.map(obj => Object.values(obj));
+          const headerCustRow = Object.keys(d.customer_data[0]);
+          setCustomers([headerCustRow, ...rawCustRows]);
+        } else setCustomers([]);
+
+        if (d.contract_data && d.contract_data.length > 0) {
+          const rawContRows = d.contract_data.map(obj => Object.values(obj));
+          const headerContRow = Object.keys(d.contract_data[0]);
+          setContracts([headerContRow, ...rawContRows]);
+        } else setContracts([]);
+
+        if (d.operation_data && Array.isArray(d.operation_data)) {
+          setOperations(d.operation_data.map(obj => {
+            const arr = Object.values(obj);
+            return { id: arr[0], name: arr[1] };
+          }));
+        } else setOperations([]);
+      }
+    } catch (error) { console.error("Failed to fetch data:", error); }
+    setLoading(false);
+  };
+
+  const saveLog = async (action, targetTable, targetRecordId, description) => {
+    if (!currentUser) return;
+    try {
+      await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ 
+          action: "saveLog", 
+          secretKey: process.env.NEXT_PUBLIC_SECRET_KEY, 
+          payload: { userId: currentUser.userId, action, targetTable, targetRecordId, description } 
+        }),
+        redirect: "follow"
+      });
+    } catch (error) { console.error("Failed to save log:", error); }
+  };
+
+  const contractCountMap = useMemo(() => {
+    const map = {};
+    if (contracts.length > 1) {
+      contracts.slice(1).forEach(row => {
+        const cId = (row[2] || '').toString().trim();
+        const status = (row[11] || '').toString().trim().toLowerCase();
+        if (cId && status !== 'expired' && status !== 'lost') {
+          map[cId] = (map[cId] || 0) + 1;
         }
+      });
+    }
+    return map;
+  }, [contracts]);
+
+  const selectedCustomerContracts = useMemo(() => {
+    if (!selectedRow || contracts.length <= 1) return [];
+    const targetCustId = (selectedRow[0] || '').toString().trim();
+    return contracts.slice(1).filter(row => (row[2] || '').toString().trim() === targetCustId);
+  }, [selectedRow, contracts]);
+
+  const serviceMatrix = useMemo(() => {
+    const matrix = {};
+    if (customers.length > 1) {
+      customers.slice(1).forEach(c => {
+        const cId = (c[0] || '').toString().trim();
+        matrix[cId] = { name: c[1], ops: new Set() };
+      });
+    }
+    if (contracts.length > 1) {
+      contracts.slice(1).forEach(c => {
+        const cId = (c[2] || '').toString().trim();
+        const opId = (c[12] || '').toString().trim();
+        const status = (c[11] || '').toString().trim().toLowerCase();
+        const rawStatus = (c[18] || '').toString().trim().toLowerCase();
         
-        function updateDashboardCards(data) {
-            document.getElementById('dashTotal').innerText = data.length; document.getElementById('dashPending').innerText = data.filter(s => s.status === 'pending').length;
-            document.getElementById('dashAvg').innerText = data.length > 0 ? (data.reduce((acc, curr) => acc + parseInt(curr.rating || 0), 0) / data.length).toFixed(1) : '0.0';
+        const isLostOrExpired = status === 'expired' || status === 'lost' || rawStatus.includes('ยกเลิก') || rawStatus.includes('ไม่ต่อ');
+        if (matrix[cId] && !isLostOrExpired) {
+          matrix[cId].ops.add(opId);
         }
+      });
+    }
+    return matrix;
+  }, [customers, contracts]);
+
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleOpenAddModal = () => {
+    let nextId = 'CUST-001';
+    if (customers.length > 1) {
+      const ids = customers.slice(1).map(row => row[0]?.startsWith('CUST-') ? parseInt(row[0].replace('CUST-', ''), 10) : 0).filter(num => !isNaN(num));
+      if (ids.length > 0) nextId = `CUST-${String(Math.max(...ids) + 1).padStart(3, '0')}`;
+    }
+    setFormData({ customerId: nextId, customerName: '', contactPerson: '', email: '', phone: '', address: '', taxId: '', status: 'Active' });
+    setIsEditMode(false); setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (row) => {
+    setFormData({
+      customerId: row[0] || '', customerName: row[1] || '', contactPerson: row[2] === '-' ? '' : (row[2] || ''),
+      email: row[3] === '-' ? '' : (row[3] || ''), phone: row[4] === '-' ? '' : (row[4] || ''),
+      address: row[5] === '-' ? '' : (row[5] || ''), taxId: row[6] === '-' ? '' : (row[6] || ''), status: row[7] || 'Active'
+    });
+    setIsEditMode(true); setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true); AlertLoading('กำลังบันทึกข้อมูล...'); 
+    const payloadData = {
+      "Customer ID": formData.customerId, "Customer Name": formData.customerName, "Contact Person": formData.contactPerson,
+      "Email": formData.email, "Phone": formData.phone, "Address": formData.address, "Tax ID": formData.taxId, "Status": formData.status
+    };
+    try {
+      const response = await fetch(process.env.NEXT_PUBLIC_GAS_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ 
+          action: "saveCustomer", 
+          secretKey: process.env.NEXT_PUBLIC_SECRET_KEY, 
+          payload: payloadData 
+        }), 
+        redirect: "follow"
+      });
+      const textResult = await response.text();
+      let result;
+      try { result = JSON.parse(textResult); } catch(err) { throw new Error("เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง"); }
+
+      if (result.success) {
+        await saveLog(isEditMode ? 'UPDATE' : 'CREATE', 'Customers', formData.customerId, `${isEditMode ? 'แก้ไข' : 'เพิ่ม'}ข้อมูลลูกค้า: ${formData.customerName} (${formData.customerId})`);
+        setIsModalOpen(false); fetchAllData(); AlertSuccess('บันทึกข้อมูลสำเร็จ!');
+      } else AlertError(result.error);
+    } catch (error) { AlertError("การเชื่อมต่อล้มเหลว: " + error.message); }
+    setIsSubmitting(false);
+  };
+
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') direction = 'descending';
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key) return <span className="text-slate-300 dark:text-slate-600 ml-1 opacity-50">↕</span>;
+    if (sortConfig.direction === 'ascending') return <span className="text-blue-600 dark:text-blue-400 ml-1">▲</span>;
+    return <span className="text-blue-600 dark:text-blue-400 ml-1">▼</span>;
+  };
+
+  const dataRows = customers.length > 1 ? customers.slice(1) : [];
+
+  const filteredCustomers = dataRows.filter(row => {
+    const statusCell = row[7] ? row[7].toString().trim() : 'Active';
+    const matchesStatus = statusFilter === 'ALL' || statusCell.toLowerCase() === statusFilter.toLowerCase();
+    const searchTerms = searchTerm.toLowerCase().trim().split(/\s+/);
+    const searchableText = row.map(cell => cell ? cell.toString().toLowerCase() : '').join(' ');
+    const matchesSearch = searchTerms.every(term => searchableText.includes(term));
+    return matchesStatus && matchesSearch;
+  });
+
+  const sortedCustomers = useMemo(() => {
+    let sortableItems = [...filteredCustomers];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        // 🌟 เรียงลำดับจำนวนสัญญา (Tab 1)
+        if (sortConfig.key === 'contractsCount') {
+          const countA = contractCountMap[(a[0] || '').toString().trim()] || 0;
+          const countB = contractCountMap[(b[0] || '').toString().trim()] || 0;
+          return sortConfig.direction === 'ascending' ? countA - countB : countB - countA;
+        }
+
+        // 🌟 เรียงลำดับชื่อลูกค้า (Tab 2 - Gaps)
+        if (sortConfig.key === 'customerNameGaps') {
+          let aVal = a[1]?.toString().toLowerCase() || '';
+          let bVal = b[1]?.toString().toLowerCase() || '';
+          if (aVal < bVal) return sortConfig.direction === 'ascending' ? -1 : 1;
+          if (aVal > bVal) return sortConfig.direction === 'ascending' ? 1 : -1;
+          return 0;
+        }
+
+        // 🌟 เรียงลำดับตามสถานะบริการ (Active/Gap) (Tab 2 - Gaps)
+        if (operations.some(op => op.id === sortConfig.key)) {
+          const opId = sortConfig.key;
+          const aHas = serviceMatrix[(a[0] || '').toString().trim()]?.ops.has(opId) ? 1 : 0;
+          const bHas = serviceMatrix[(b[0] || '').toString().trim()]?.ops.has(opId) ? 1 : 0;
+          if (aHas < bHas) return sortConfig.direction === 'ascending' ? -1 : 1;
+          if (aHas > bHas) return sortConfig.direction === 'ascending' ? 1 : -1;
+          
+          // ถ้าสถานะเหมือนกัน ให้เรียงชื่อตามตัวอักษรแทน
+          let aName = a[1]?.toString().toLowerCase() || '';
+          let bName = b[1]?.toString().toLowerCase() || '';
+          if (aName < bName) return sortConfig.direction === 'ascending' ? -1 : 1;
+          if (aName > bName) return sortConfig.direction === 'ascending' ? 1 : -1;
+          return 0;
+        }
+
+        // 🌟 การเรียงลำดับพื้นฐานคอลัมน์อื่นๆ
+        let aVal = a[sortConfig.key]?.toString().toLowerCase() || '';
+        let bVal = b[sortConfig.key]?.toString().toLowerCase() || '';
+        if (aVal < bVal) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'ascending' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredCustomers, sortConfig, contractCountMap, serviceMatrix, operations]);
+
+  const totalPages = Math.ceil(sortedCustomers.length / itemsPerPage);
+  const paginatedCustomers = sortedCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handleOpenDetail = (row) => {
+    const idx = sortedCustomers.findIndex(r => r[0] === row[0]);
+    setSelectedRowIndex(idx); setSelectedRow(row); setIsDetailModalOpen(true);
+  };
+
+  const handleNextDetail = () => {
+    if (selectedRowIndex !== null && selectedRowIndex < sortedCustomers.length - 1) {
+      const nextIndex = selectedRowIndex + 1;
+      setSelectedRowIndex(nextIndex); setSelectedRow(sortedCustomers[nextIndex]);
+    }
+  };
+
+  const handlePrevDetail = () => {
+    if (selectedRowIndex !== null && selectedRowIndex > 0) {
+      const prevIndex = selectedRowIndex - 1;
+      setSelectedRowIndex(prevIndex); setSelectedRow(sortedCustomers[prevIndex]);
+    }
+  };
+
+  const exportGapsToCSV = () => {
+    if (sortedCustomers.length === 0) {
+      AlertError("ไม่มีข้อมูลสำหรับส่งออก");
+      return;
+    }
+    let csvContent = "\uFEFF";
+
+    const baseHeaders = ["Customer ID", "ชื่อบริษัท", "สถานะระบบ"];
+    const opHeaders = operations.map(op => op.id);
+    const allHeaders = [...baseHeaders, ...opHeaders];
+    csvContent += allHeaders.join(",") + "\n";
+
+    sortedCustomers.forEach(row => {
+      const custId = (row[0] || '').toString().trim();
+      const custName = (row[1] || '').toString().replace(/,/g, ' '); 
+      const status = (row[7] || 'Active').toString().trim();
+      const custMatrix = serviceMatrix[custId] || { ops: new Set() };
+
+      const rowData = [custId, `"${custName}"`, status];
+      operations.forEach(op => {
+        const hasService = custMatrix.ops.has(op.id);
+        rowData.push(hasService ? "Active" : "Gap");
+      });
+      
+      csvContent += rowData.join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `STMS_Service_Gaps_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const canManageData = currentUser && currentUser.role !== 'MD';
+
+  if (loading) return <div className="flex items-center justify-center min-h-[400px]"><div className="p-8 text-center text-slate-500 dark:text-slate-400 animate-pulse text-lg font-bold">กำลังโหลดข้อมูลลูกค้า...</div></div>;
+
+  return (
+    <div className="relative animate-fadeIn">
+      
+      <div className="flex overflow-x-auto space-x-2 mb-6 bg-slate-200/50 dark:bg-slate-800 p-1.5 rounded-2xl transition-colors">
+        <button onClick={() => setActiveTab('list')} className={`flex-1 flex items-center justify-center py-2.5 px-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'list' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          รายชื่อลูกค้า ({dataRows.length})
+        </button>
+        <button onClick={() => setActiveTab('gaps')} className={`flex-1 flex items-center justify-center py-2.5 px-3 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'gaps' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}>
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          วิเคราะห์โอกาส (Service Gaps)
+        </button>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          {activeTab === 'list' && (
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full sm:w-44 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm shadow-sm h-10 transition-colors">
+              <option value="ALL">สถานะทั้งหมด</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          )}
+          <div className="relative w-full sm:w-80">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
+            <input type="text" placeholder="ค้นหาลูกค้ารายบริษัท..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm shadow-sm h-10 transition-colors"/>
+          </div>
+        </div>
         
-        async function markAsResolved(surveyId) {
-            if(await confirmAction('ยืนยันการแก้ไข', `คุณได้ดำเนินการแก้ปัญหาแบบประเมินรหัส #${surveyId} แล้วใช่หรือไม่?`, 'ใช่, แก้ไขแล้ว', false)) {
-                try {
-                    const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'resolveSurvey', survey_id: surveyId, user_id: currentUser.user_id }) });
-                    if (result.status === 'success') { Toast.fire({icon: 'success', title: 'อัปเดตสถานะสำเร็จ'}); fetchSurveyData(); } else Swal.fire('Error', result.message, 'error');
-                } catch (error) { Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเชื่อมต่อ ลองใหม่อีกครั้ง', 'error'); }
-            }
-        }
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+          {activeTab === 'gaps' && (
+            <button onClick={exportGapsToCSV} className="h-10 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-4 rounded-xl shadow-sm transition flex items-center justify-center text-sm font-medium whitespace-nowrap min-w-[120px]">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
+              Export CSV
+            </button>
+          )}
+          {activeTab === 'list' && canManageData && (
+            <button onClick={handleOpenAddModal} className="h-10 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-4 rounded-xl shadow-sm transition flex items-center justify-center text-sm font-medium whitespace-nowrap min-w-[120px]">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+              เพิ่มลูกค้าใหม่
+            </button>
+          )}
+        </div>
+      </div>
 
-        function printDashboardReport() { 
-            const printWindow = window.open('', '_blank');
-            let tableRows = '';
-            (currentFilteredSurveys.length > 0 ? currentFilteredSurveys : allSurveys).forEach(item => {
-                const d = new Date(item.created_at); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                const stars = '⭐'.repeat(parseInt(item.rating) || 0); const statusText = item.status === 'pending' ? 'รอดำเนินการ' : 'แก้ไขแล้ว';
-                tableRows += `<tr><td style="padding:8px; border:1px solid #ccc;">${dateStr}</td><td style="padding:8px; border:1px solid #ccc;">${item.project_name || '-'}</td><td style="padding:8px; border:1px solid #ccc;">${item.zone_name} (${item.zone_id})</td><td style="padding:8px; border:1px solid #ccc; text-align:center;">${stars} (${item.rating})</td><td style="padding:8px; border:1px solid #ccc;">${item.feedback || '-'}</td><td style="padding:8px; border:1px solid #ccc; text-align:center;">${statusText}</td></tr>`;
-            });
-            printWindow.document.write(`<html><head><title>รายงานผลการประเมิน</title><link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/LineSeedSansTH/LineSeedSansTH.css" rel="stylesheet" /><style>body { font-family: 'LINE Seed Sans TH', sans-serif; padding: 20px; color:#333; }</style></head><body><h2 style="text-align:center;">รายงานผลการประเมินพื้นที่</h2><p><strong>จำนวนทั้งหมด:</strong> ${document.getElementById('dashTotal').innerText} รายการ | <strong>คะแนนเฉลี่ย:</strong> ${document.getElementById('dashAvg').innerText} | <strong>รอดำเนินการ:</strong> ${document.getElementById('dashPending').innerText}</p><table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left;"><thead><tr style="background:#eee;"><th style="padding:8px; border:1px solid #ccc;">วัน-เวลา</th><th style="padding:8px; border:1px solid #ccc;">โครงการ</th><th style="padding:8px; border:1px solid #ccc;">พื้นที่ (โซน)</th><th style="padding:8px; border:1px solid #ccc; text-align:center;">คะแนน</th><th style="padding:8px; border:1px solid #ccc;">ข้อเสนอแนะ</th><th style="padding:8px; border:1px solid #ccc; text-align:center;">สถานะ</th></tr></thead><tbody>${tableRows || '<tr><td colspan="6" style="text-align:center; padding:20px;">ไม่มีข้อมูล</td></tr>'}</tbody></table><script>setTimeout(() => { window.print(); }, 800);<\/script></body></html>`);
-            printWindow.document.close();
-        }
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col min-h-[500px] transition-colors">
+        <div className="p-0 overflow-x-auto flex-grow w-full">
+          
+          {/* 🌟 Tab 1: ตารางรายชื่อลูกค้าปกติ */}
+          {activeTab === 'list' && (
+            dataRows.length > 0 ? (
+              <table className="w-full text-left table-fixed min-w-[850px]">
+                <thead>
+                  <tr className="bg-slate-50/70 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-100 dark:border-slate-700 select-none transition-colors">
+                    <th className="p-4 w-[13%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(0)}>Customer ID {renderSortIcon(0)}</th>
+                    <th className="p-4 w-[26%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(1)}>ชื่อบริษัท {renderSortIcon(1)}</th>
+                    <th className="p-4 w-[15%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(2)}>ผู้ติดต่อ {renderSortIcon(2)}</th>
+                    <th className="p-4 w-[13%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(4)}>เบอร์โทรศัพท์ {renderSortIcon(4)}</th>
+                    <th className="p-4 w-[9%] text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort('contractsCount')}>สัญญา {renderSortIcon('contractsCount')}</th>
+                    <th className="p-4 w-[9%] text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(7)}>สถานะ {renderSortIcon(7)}</th>
+                    <th className="p-4 w-[7%] text-center">เปิดดู</th>
+                    {canManageData && <th className="p-4 w-[8%] text-center">จัดการ</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                  {paginatedCustomers.length > 0 ? (
+                    paginatedCustomers.map((row, rowIndex) => {
+                      const custId = (row[0] || '').toString().trim();
+                      const cCount = contractCountMap[custId] || 0;
+                      const statusText = row[7]?.trim() || 'Active';
+                      return (
+                        <tr key={rowIndex} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                          <td className="p-4 text-slate-700 dark:text-slate-300 text-xs font-bold"><div className="truncate" title={row[0]}>{row[0]}</div></td>
+                          <td className="p-4 text-slate-800 dark:text-slate-100 text-sm font-bold"><div className="truncate" title={row[1]}>{row[1]}</div></td>
+                          <td className="p-4 text-slate-600 dark:text-slate-400 text-sm"><div className="truncate" title={row[2]}>{row[2] || '-'}</div></td>
+                          <td className="p-4 text-slate-600 dark:text-slate-400 text-sm"><div className="truncate" title={row[4]}>{row[4] || '-'}</div></td>
+                          <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-xs font-bold ${cCount > 0 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>{cCount} ฉบับ</span></td>
+                          <td className="p-4 text-sm text-center"><span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase inline-block ${statusText === 'Active' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'}`}>{statusText}</span></td>
+                          <td className="p-4 text-center"><button onClick={() => handleOpenDetail(row)} className="inline-flex items-center justify-center p-2 text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/30 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-600 dark:hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="ดูรายละเอียด"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button></td>
+                          {canManageData && (
+                            <td className="p-4 text-center">
+                              <button onClick={() => handleOpenEditModal(row)} className="p-2 text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/30 rounded-lg border border-emerald-100 dark:border-emerald-800/50 hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="แก้ไข"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })
+                  ) : ( <tr><td colSpan={canManageData ? "8" : "7"} className="p-8 text-slate-400 dark:text-slate-500 text-center text-sm">ไม่พบข้อมูลลูกค้าที่ตรงกับเงื่อนไขการค้นหา</td></tr> )}
+                </tbody>
+              </table>
+            ) : ( <div className="p-8 text-slate-400 dark:text-slate-500 text-center text-sm">ยังไม่มีข้อมูลลูกค้าในระบบ</div> )
+          )}
 
-        function exportDashboardCSV() { 
-            const dataToExport = currentFilteredSurveys.length > 0 ? currentFilteredSurveys : allSurveys;
-            if (dataToExport.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลสำหรับส่งออก', 'warning');
-            let csvContent = "วัน-เวลา,โครงการ,รหัสพื้นที่,ชื่อพื้นที่,คะแนน,ข้อเสนอแนะ,สถานะ\n";
-            dataToExport.forEach(item => {
-                const d = new Date(item.created_at); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                let feedback = item.feedback ? item.feedback.replace(/"/g, '""') : '-'; const statusText = item.status === 'pending' ? 'รอดำเนินการ' : 'แก้ไขแล้ว';
-                const row = `"${dateStr}","${item.project_name || '-'}","${item.zone_id}","${item.zone_name}","${item.rating}","${feedback}","${statusText}"`; csvContent += row + "\n";
-            });
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `Survey_Report_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        }
+          {/* 🌟 Tab 2: ตารางวิเคราะห์โอกาส Service Gaps พร้อมฟีเจอร์จัดเรียง */}
+          {activeTab === 'gaps' && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left table-auto min-w-[900px]">
+                <thead>
+                  <tr className="bg-slate-50/70 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-700 select-none">
+                    <th className="p-4 w-[30%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort('customerNameGaps')}>
+                      ข้อมูลบริษัท / ลูกค้า {renderSortIcon('customerNameGaps')}
+                    </th>
+                    {operations.map(op => (
+                      <th key={op.id} className="p-4 text-center w-[12%] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort(op.id)}>
+                        <span title={op.name}>{op.id}</span> {renderSortIcon(op.id)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                  {paginatedCustomers.map((row, rowIndex) => {
+                    const custId = (row[0] || '').toString().trim();
+                    const custMatrix = serviceMatrix[custId] || { ops: new Set() };
+                    
+                    return (
+                      <tr key={rowIndex} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td className="p-4">
+                          <div className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate" title={row[1]}>{row[1]}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{custId}</div>
+                        </td>
+                        {operations.map(op => {
+                          const hasService = custMatrix.ops.has(op.id);
+                          return (
+                            <td key={op.id} className="p-4 text-center">
+                              {hasService ? (
+                                <div className="inline-flex items-center justify-center p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-200 dark:border-emerald-800" title={`ใช้งาน ${op.id} แล้ว`}>
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                              ) : (
+                                <div className="inline-flex items-center justify-center p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 rounded-lg border border-slate-200 dark:border-slate-700 border-dashed" title={`โอกาสเสนอขาย ${op.id}`}>
+                                  <span className="text-[10px] font-black tracking-wider uppercase">Gap</span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                  {paginatedCustomers.length === 0 && (
+                    <tr><td colSpan={operations.length + 1} className="p-8 text-slate-400 dark:text-slate-500 text-center text-sm">ไม่พบข้อมูลลูกค้า</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-        // --- Menu 3 ---
-        let allGlobalProjects = []; let isEditingUser = false;  
-        
-        function switchAdminTab(tabId) { 
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); 
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); 
-            document.getElementById(tabId).classList.add('active'); 
-            event.target.classList.add('active'); 
-        }
-        function closeModals() { document.getElementById('modalProject').style.display = 'none'; document.getElementById('modalUser').style.display = 'none'; }
+        </div>
 
-        async function loadAdminTables() {
-            const tbodyP = document.getElementById('adminProjectTable'); const tbodyU = document.getElementById('adminUserTable');
-            tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>';
-            try {
-                let result = await safeFetch(`${API_URL}?action=getAdminData`);
-                if(result.status === 'success') {
-                    const dataP = result.data.projects; const dataU = result.data.users; const dataA = result.data.assignments;
-                    tbodyP.innerHTML = ''; allGlobalProjects = dataP; 
-                    if (dataP.length === 0) tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--text-muted);">ยังไม่มีโครงการ</td></tr>';
-                    else {
-                        dataP.forEach(p => {
-                            let statusHtml = String(p.is_active).toUpperCase() === 'TRUE' ? `<span class="badge badge-green">เปิดใช้งาน</span>` : `<span class="badge badge-red">ปิดระบบ</span>`;
-                            let btnHtml = String(p.is_active).toUpperCase() === 'TRUE' ? `<button onclick="toggleProject('${p.project_id}', false)" class="btn btn-warning btn-sm">ปิดระบบ</button>` : `<button onclick="toggleProject('${p.project_id}', true)" class="btn btn-success btn-sm">เปิดใช้งาน</button>`;
-                            let delProjBtn = `<button onclick="deleteProject('${p.project_id}')" class="btn btn-danger btn-sm">🗑️ ลบ</button>`;
-                            
-                            tbodyP.innerHTML += `<tr>
-                                <td><span style="font-weight:600; color:var(--primary);">${p.project_id}</span></td>
-                                <td>${p.project_name} <a href="javascript:void(0)" onclick="editProjectName('${p.project_id}', '${p.project_name}')" style="font-size:11px; color:var(--primary); margin-left:5px; text-decoration:none;">[✏️ เปลี่ยนชื่อ]</a></td>
-                                <td style="text-align:center;">${statusHtml}</td>
-                                <td style="text-align:center;"><div style="display:flex; justify-content:center; gap:6px;">${btnHtml} ${delProjBtn}</div></td>
-                            </tr>`;
-                        });
-                    }
-                    tbodyU.innerHTML = '';
-                    if (dataU.length === 0) tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--text-muted);">ยังไม่มีผู้ใช้งาน</td></tr>';
-                    else {
-                        dataU.forEach(u => {
-                            let statusHtml = String(u.is_active).toUpperCase() === 'TRUE' ? `<span class="badge badge-green">ปกติ</span>` : `<span class="badge badge-red">ถูกระงับ</span>`;
-                            let btnHtml = String(u.is_active).toUpperCase() === 'TRUE' ? `<button onclick="toggleUser('${u.user_id}', false)" class="btn btn-warning btn-sm">ระงับ</button>` : `<button onclick="toggleUser('${u.user_id}', true)" class="btn btn-success btn-sm">ปลดแบน</button>`;
-                            let userProjs = dataA ? dataA.filter(a => String(a.user_id) === String(u.user_id)).map(a => a.project_id) : [];
-                            let editBtn = `<button onclick="openUserModal(true, '${u.user_id}', '${u.name}', '${u.role}', '${userProjs.join(',')}')" class="btn btn-primary btn-sm">✏️ แก้ไข</button>`;
-                            let delBtn = `<button onclick="deleteUser('${u.user_id}')" class="btn btn-danger btn-sm">🗑️ ลบ</button>`;
-                            
-                            tbodyU.innerHTML += `<tr>
-                                <td><span style="font-weight:600; color:var(--primary);">${u.user_id}</span></td>
-                                <td>${u.name}<br><small style="color:var(--text-muted);">Role: ${u.role}</small></td>
-                                <td style="text-align:center;">${statusHtml}</td>
-                                <td style="text-align:center;"><div style="display:flex; justify-content:center; gap:6px;">${editBtn} ${btnHtml} ${delBtn}</div></td>
-                            </tr>`;
-                        });
-                    }
-                } else { Swal.fire('Error', result.message, 'error'); }
-            } catch(e) { tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--danger);">เชื่อมต่อล้มเหลว</td></tr>'; }
-        }
+        {!loading && sortedCustomers.length > 0 && (
+          <div className="border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80 p-4 flex items-center justify-between flex-shrink-0 transition-colors">
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">แสดงข้อมูล {((currentPage - 1) * itemsPerPage) + 1} ถึง {Math.min(currentPage * itemsPerPage, sortedCustomers.length)} จากทั้งหมด {sortedCustomers.length} รายการ</span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className={`px-3 py-1.5 rounded-lg border text-sm font-bold transition-colors ${currentPage === 1 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border-transparent' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}>ก่อนหน้า</button>
+              <div className="flex items-center gap-1 px-2">
+                {Array.from({ length: Math.min(5, totalPages) }).map((_, idx) => {
+                  let pageNum;
+                  if (totalPages <= 5) pageNum = idx + 1; else if (currentPage <= 3) pageNum = idx + 1; else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + idx; else pageNum = currentPage - 2 + idx;
+                  return ( <button key={pageNum} onClick={() => setCurrentPage(pageNum)} className={`w-8 h-8 rounded-lg text-sm font-bold transition flex items-center justify-center ${currentPage === pageNum ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>{pageNum}</button> );
+                })}
+              </div>
+              <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className={`px-3 py-1.5 rounded-lg border text-sm font-bold transition-colors ${currentPage === totalPages ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border-transparent' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'}`}>ถัดไป</button>
+            </div>
+          </div>
+        )}
+      </div>
 
-        function openProjectModal() { document.getElementById('modalProjName').value = ''; document.getElementById('modalProject').style.display = 'flex'; }
-        
-        async function submitProjectModal() {
-            const pname = document.getElementById('modalProjName').value.trim();
-            if (!pname) return Swal.fire('แจ้งเตือน', 'กรุณากรอกชื่อโครงการ', 'warning');
-            const btn = document.getElementById('btnSaveProject'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; 
-            try {
-                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname, actor_id: currentUser.user_id }) });
-                if (result.status === 'success') { Toast.fire({icon: 'success', title: 'บันทึกสำเร็จ'}); closeModals(); loadAdminTables(); fetchProjects(); } else Swal.fire('Error', result.message, 'error');
-            } catch(e) { Swal.fire('Error', 'เชื่อมต่อล้มเหลว', 'error'); } finally { btn.innerText = "บันทึกข้อมูล"; btn.disabled = false; }
-        }
+      {/* 🌟 Detail Modal */}
+      {isDetailModalOpen && selectedRow && (
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-700 transform transition-all max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between flex-shrink-0 bg-slate-50/50 dark:bg-slate-800">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">รายละเอียดลูกค้า</h3>
+                <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-xs font-bold">{selectedRowIndex + 1} / {sortedCustomers.length}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={handlePrevDetail} disabled={selectedRowIndex === 0} className={`p-2 rounded-xl transition-all ${selectedRowIndex === 0 ? 'text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800 cursor-not-allowed' : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50'}`} title="ลูกค้าก่อนหน้า"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button onClick={handleNextDetail} disabled={selectedRowIndex === sortedCustomers.length - 1} className={`p-2 rounded-xl transition-all ${selectedRowIndex === sortedCustomers.length - 1 ? 'text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800 cursor-not-allowed' : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50'}`} title="ลูกค้าถัดไป"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 p-2 rounded-full hover:bg-rose-50 dark:hover:bg-slate-700 transition"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4 text-sm text-slate-600 dark:text-slate-300 overflow-y-auto flex-grow custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex bg-blue-50/60 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800/50"><span className="w-28 font-semibold text-blue-700 dark:text-blue-400 flex-shrink-0">Customer ID:</span><span className="font-black text-blue-800 dark:text-blue-300 break-all">{selectedRow[0]}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">สถานะ:</span><span className={`font-bold ${(selectedRow[7]?.trim() || 'Active') === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{selectedRow[7] || 'Active'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600 md:col-span-2"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">ชื่อบริษัท:</span><span className="font-bold text-slate-800 dark:text-slate-100 break-words">{selectedRow[1]}</span></div>
+                
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">ผู้ติดต่อ:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-words">{selectedRow[2] || '-'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">เบอร์โทรศัพท์:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-all">{selectedRow[4] || '-'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">อีเมล:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-all">{selectedRow[3] || '-'}</span></div>
+                
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">Tax ID:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-all">{selectedRow[6] || '-'}</span></div>
+                <div className="flex bg-slate-50 dark:bg-slate-700/30 p-3 rounded-xl border border-slate-100 dark:border-slate-600 md:col-span-2"><span className="w-28 font-semibold text-slate-500 dark:text-slate-400 flex-shrink-0">ที่อยู่:</span><span className="font-medium text-slate-800 dark:text-slate-100 break-words">{selectedRow[5] || '-'}</span></div>
+              </div>
 
-        async function editProjectName(id, oldName) {
-            const { value: newName } = await Swal.fire({
-                title: `เปลี่ยนชื่อโครงการ ${id}`, input: 'text', inputValue: oldName,
-                showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#2563eb'
-            });
-            if(newName && newName.trim() !== '' && newName !== oldName) {
-                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, new_name: newName, actor_id: currentUser.user_id }) });
-                Toast.fire({icon: 'success', title: 'อัปเดตชื่อสำเร็จ'}); loadAdminTables(); fetchProjects();
-            }
-        }
-        
-        async function toggleProject(id, activeStatus) {
-            if(await confirmAction('ยืนยันเปลี่ยนสถานะ', `ต้องการ ${activeStatus ? 'เปิด' : 'ปิด'} โครงการ ${id} ใช่หรือไม่?`)) {
-                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateProject', project_id: id, is_active: activeStatus, actor_id: currentUser.user_id }) });
-                Toast.fire({icon: 'success', title: 'อัปเดตสถานะสำเร็จ'}); loadAdminTables(); fetchProjects();
-            }
-        }
-        
-        async function deleteProject(id) {
-            if (await confirmAction('⚠️ ยืนยันลบถาวร', `การลบโครงการ ${id} จะลบโซนและสิทธิ์พนักงานทั้งหมดที่ผูกไว้ทันที และไม่สามารถกู้คืนได้!`, 'ลบถาวร', true)) {
-                try {
-                    const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteProject', project_id: id, actor_id: currentUser.user_id }) });
-                    if (result.status === 'success') { Toast.fire({icon: 'success', title: 'ลบข้อมูลสำเร็จ'}); loadAdminTables(); fetchProjects(); } else Swal.fire('Error', result.message, 'error');
-                } catch (e) { Swal.fire('Error', 'เกิดข้อผิดพลาด', 'error'); }
-            }
-        }
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-700 mt-4">
+                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                  <span>โอกาสการขาย / บริการที่ใช้งาน (Service Matrix)</span>
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {operations.map(op => {
+                    const hasService = serviceMatrix[selectedRow[0]]?.ops.has(op.id);
+                    return (
+                      <div key={op.id} className={`flex flex-col items-center justify-center p-3 rounded-xl border w-24 transition-colors ${hasService ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 border-dashed opacity-70'}`}>
+                        <span className={`text-sm font-black mb-1 ${hasService ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>{op.id}</span>
+                        {hasService ? (
+                          <span className="text-[9px] uppercase font-bold text-emerald-700 dark:text-emerald-500 tracking-wider bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded">Active</span>
+                        ) : (
+                          <span className="text-[9px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded">Gap</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-        function openUserModal(isEdit = false, uid = '', name = '', role = 'staff', assignedStr = '') {
-            isEditingUser = isEdit;
-            document.getElementById('modalUserId').value = uid; document.getElementById('modalUserName').value = name;
-            document.getElementById('modalUserPwd').value = ''; document.getElementById('modalUserRole').value = role;
-            document.getElementById('modalUserId').disabled = isEdit; 
-            document.getElementById('modalUserTitle').innerText = isEdit ? '✏️ แก้ไขข้อมูลผู้ใช้งาน' : '👤 เพิ่มผู้ใช้งานใหม่';
-            document.getElementById('modalUserPwd').placeholder = isEdit ? 'รหัสผ่าน (เว้นว่างได้ถ้าไม่ต้องการเปลี่ยน)' : 'รหัสผ่าน (ต้องระบุ)';
-            
-            let assignedArr = (assignedStr || '').split(',');
-            let chkContainer = document.getElementById('modalProjectCheckboxes'); chkContainer.innerHTML = ''; 
-            if (allGlobalProjects && allGlobalProjects.length > 0) {
-                allGlobalProjects.forEach(p => {
-                    let isChecked = assignedArr.includes(p.project_id) ? 'checked' : '';
-                    chkContainer.innerHTML += `<label><input type="checkbox" class="proj-checkbox" value="${p.project_id}" ${isChecked}> ${p.project_name}</label>`;
-                });
-            } else { chkContainer.innerHTML = '<span style="color:var(--text-muted); font-size:13px;">ไม่พบข้อมูลโครงการในระบบ หรือกำลังโหลดข้อมูล</span>'; }
-            toggleProjectSelection(); document.getElementById('modalUser').style.display = 'flex';
-        }
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-700 mt-4">
+                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">สัญญาที่ผูกกับลูกค้ารายนี้ ({selectedCustomerContracts.length} ฉบับ)</h4>
+                {selectedCustomerContracts.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {selectedCustomerContracts.map((c, i) => {
+                      const val = c[8] && !isNaN(Number(String(c[8]).replace(/,/g, ''))) ? Number(String(c[8]).replace(/,/g, '')).toLocaleString() : '0';
+                      const isLostOrExpired = ['expired', 'lost', 'ยกเลิก', 'ไม่ต่อ'].some(kw => (c[11]||'').toString().toLowerCase().includes(kw) || (c[18]||'').toString().toLowerCase().includes(kw));
+                      
+                      return (
+                        <div key={i} className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs transition-colors ${isLostOrExpired ? 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 opacity-75' : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600'}`}>
+                          <div>
+                            <span className="font-bold text-blue-700 dark:text-blue-400 mr-2">{c[0]}</span>
+                            <span className={`font-semibold ${isLostOrExpired ? 'text-slate-500 dark:text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>{c[1] || c[4] || '-'}</span>
+                            <span className={`ml-2 px-2 py-0.5 rounded font-bold text-[10px] ${isLostOrExpired ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300'}`}>{c[12] || '-'}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-right">
+                            <span className="text-slate-500 dark:text-slate-400">{c[6] || '-'} ถึง {c[7] || '-'}</span>
+                            <span className={`font-bold whitespace-nowrap ${isLostOrExpired ? 'text-slate-400 dark:text-slate-500' : 'text-emerald-600 dark:text-emerald-400'}`}>฿{val}/เดือน</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : ( <div className="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl text-center text-xs font-medium text-slate-400 dark:text-slate-500">ยังไม่มีสัญญาผูกกับลูกค้ารายนี้</div> )}
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center flex-shrink-0 bg-slate-50/50 dark:bg-slate-800 transition-colors">
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline-block">ใช้ปุ่ม <span className="px-1.5 py-0.5 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded text-slate-600 dark:text-slate-300">{'<'}</span> <span className="px-1.5 py-0.5 bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 rounded text-slate-600 dark:text-slate-300">{'>'}</span> ด้านบนเพื่อเลื่อนดูลูกค้าถัดไป</span>
+              <button onClick={() => setIsDetailModalOpen(false)} className="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-xl transition-colors w-full sm:w-auto">ปิดหน้าต่าง</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        function toggleProjectSelection() {
-            const role = document.getElementById('modalUserRole').value; const section = document.getElementById('projectAssignmentSection');
-            if (section) section.style.display = (role === 'admin') ? 'none' : 'block';
-        }
-        
-        async function submitUserModal() {
-            const uid = document.getElementById('modalUserId').value.trim(); const name = document.getElementById('modalUserName').value.trim();
-            const pwd = document.getElementById('modalUserPwd').value.trim(); const role = document.getElementById('modalUserRole').value;
-            let selectedProjs = [];
-            if (role !== 'admin') document.querySelectorAll('.proj-checkbox:checked').forEach(cb => selectedProjs.push(cb.value));
-            if (!uid || !name) return Swal.fire('แจ้งเตือน', 'กรุณากรอกรหัสและชื่อผู้ใช้งาน', 'warning');
-            if (!isEditingUser && !pwd) return Swal.fire('แจ้งเตือน', 'กรุณาตั้งรหัสผ่านสำหรับผู้ใช้ใหม่', 'warning');
+      {/* --- Add/Edit Modal (ฟอร์มเพิ่ม/แก้ไขลูกค้า) --- */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 dark:border-slate-700 transform transition-all max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><svg className="w-6 h-6 text-blue-600 dark:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>{isEditMode ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่'}</h2>
+              <button onClick={() => setIsModalOpen(false)} disabled={isSubmitting} className={`p-2 rounded-full transition-colors ${isSubmitting ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'}`}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div className="overflow-y-auto flex-grow custom-scrollbar pr-2 pb-2">
+              <form id="customer-form" onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Customer ID {isEditMode ? '(ล็อกรหัส)' : '(แก้ไขเป็นรหัสบัญชีได้)'}</label>
+                    <input required readOnly={isEditMode} name="customerId" value={formData.customerId} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isEditMode || isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100'}`} placeholder="เช่น CUST-001 หรือ PPG-0009"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ชื่อบริษัท / ชื่อลูกค้า <span className="text-rose-500">*</span></label>
+                    <input required type="text" name="customerName" value={formData.customerName} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="ระบุชื่อบริษัท..."/>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-600">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ผู้ติดต่อ (Contact Person)</label>
+                    <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="ชื่อผู้ติดต่อ..."/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">เบอร์โทรศัพท์ (Phone)</label>
+                    <input type="text" name="phone" value={formData.phone} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="02-xxx-xxxx"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">อีเมล (Email)</label>
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="example@email.com"/>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">เลขประจำตัวผู้เสียภาษี (Tax ID)</label>
+                    <input type="text" name="taxId" value={formData.taxId} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="เลข 13 หลัก"/>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">ที่อยู่จดทะเบียน (Address)</label>
+                  <textarea name="address" value={formData.address} onChange={handleChange} rows="2" disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500'}`} placeholder="ที่อยู่สำหรับออกใบกำกับภาษี..."></textarea>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">สถานะระบบ (Status)</label>
+                  <select name="status" value={formData.status} onChange={handleChange} disabled={isSubmitting} className={`w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors ${isSubmitting ? 'bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400'}`}>
+                    <option value="Active">🟢 Active (กำลังใช้งาน)</option>
+                    <option value="Inactive">⚪ Inactive (ระงับชั่วคราว)</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div className="flex justify-end space-x-3 pt-5 border-t border-slate-100 dark:border-slate-700 mt-2 flex-shrink-0">
+              <button type="button" onClick={() => setIsModalOpen(false)} disabled={isSubmitting} className={`px-6 py-2.5 text-sm font-bold rounded-xl transition-colors ${isSubmitting ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed' : 'text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>ยกเลิก</button>
+              <button type="button" onClick={() => { const form = document.getElementById('customer-form'); if(form) form.requestSubmit(); }} disabled={isSubmitting} className={`px-8 py-2.5 text-sm font-bold text-white rounded-xl shadow-sm transition-colors flex items-center ${isSubmitting ? 'bg-blue-400 dark:bg-blue-600 cursor-wait' : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500'}`}>
+                {isSubmitting && <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
+                {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกข้อมูลลูกค้า'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            const btn = document.getElementById('btnSaveUser'); btn.innerText = "กำลังบันทึก..."; btn.disabled = true; 
-            let payload = isEditingUser 
-                ? { action: 'updateUser', user_id: uid, new_password: pwd, role: role, projects: selectedProjs, actor_id: currentUser.user_id } 
-                : { action: 'createUser', new_user_id: uid, name: name, password: pwd, role: role, projects: selectedProjs, actor_id: currentUser.user_id }; 
-            try {
-                const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                if(result.status === 'success') { Toast.fire({icon: 'success', title: 'บันทึกสำเร็จ'}); closeModals(); loadAdminTables(); } else Swal.fire('Error', result.message, 'error');
-            } catch(e) { Swal.fire('Error', 'เชื่อมต่อล้มเหลว', 'error'); } finally { btn.innerText = "บันทึกข้อมูลผู้ใช้"; btn.disabled = false; }
-        }
-
-        async function toggleUser(id, activeStatus) {
-            if(id === currentUser.user_id) return Swal.fire('ข้อผิดพลาด', 'ไม่สามารถระงับบัญชีตัวเองได้', 'error');
-            if(await confirmAction('ยืนยันเปลี่ยนสถานะ', `ต้องการ ${activeStatus ? 'ปลดระงับ' : 'ระงับบัญชี'} ${id} ใช่หรือไม่?`, activeStatus ? 'ปลดระงับ' : 'ระงับ', !activeStatus)) {
-                await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUser', user_id: id, is_active: activeStatus, actor_id: currentUser.user_id }) });
-                Toast.fire({icon: 'success', title: 'อัปเดตสถานะสำเร็จ'}); loadAdminTables();
-            }
-        }
-
-        async function deleteUser(id) {
-            if(id === currentUser.user_id) return Swal.fire('ข้อผิดพลาด', 'ไม่สามารถลบบัญชีตัวเองได้', 'error');
-            if(await confirmAction('⚠️ ยืนยันลบถาวร', `ลบบัญชีผู้ใช้ ${id} อย่างถาวรใช่หรือไม่?\nข้อมูลสิทธิ์ทั้งหมดจะถูกลบไปด้วย`, 'ลบถาวร', true)) {
-                try {
-                    const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteUser', target_user_id: id, actor_id: currentUser.user_id }) });
-                    if (result.status === 'success') { Toast.fire({icon: 'success', title: 'ลบข้อมูลสำเร็จ'}); loadAdminTables(); } else Swal.fire('Error', result.message, 'error');
-                } catch (e) { Swal.fire('Error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error'); }
-            }
-        }
-
-        // --- Menu 4 (Logs) ---
-        async function fetchLogs() {
-            const tbody = document.getElementById('logsTableBody');
-            const btn = document.getElementById('btnRefreshLogs'); btn.innerText = "กำลังรีเฟรช..."; btn.disabled = true;
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>';
-            try {
-                const result = await safeFetch(`${API_URL}?action=getLogs`);
-                if (result.status === 'success') {
-                    let allowedLogs = result.data;
-                    if (allowedLogs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color:var(--text-muted);">ยังไม่มีประวัติการทำงาน</td></tr>'; return; }
-                    tbody.innerHTML = '';
-                    allowedLogs.forEach(log => {
-                        const tr = document.createElement('tr');
-                        const d = new Date(log.timestamp); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-                        tr.innerHTML = `
-                            <td>${dateStr}</td>
-                            <td><span style="font-weight:600; color:var(--primary);">${log.user_id}</span></td>
-                            <td><span class="badge badge-gray">${log.project_id || '-'}</span></td>
-                            <td><span class="badge badge-yellow">${log.action}</span></td>
-                            <td style="color:var(--text-muted);">${log.detail}</td>`;
-                        tbody.appendChild(tr);
-                    });
-                } else { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color:var(--danger);">${result.message}</td></tr>`; }
-            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color:var(--danger);">เชื่อมต่อล้มเหลว</td></tr>'; }
-            finally { btn.innerText = "🔄 รีเฟรชข้อมูล"; btn.disabled = false; }
-        }
-    </script>
-</body>
-</html>
+      <style jsx>{`
+        .animate-fadeIn { animation: fadeIn 0.3s ease-in-out; } 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 20px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(75, 85, 99, 0.5); }
+      `}</style>
+    </div>
+  );
+}
