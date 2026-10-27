@@ -54,20 +54,9 @@
         body { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
         
         /* 🔒 Login Box */
-    <!-- หน้าต่าง Login -->
-    <div id="loginSection">
-        <div class="login-box">
-            <h2 style="font-size: 28px;">STMS Survey</h2>
-            <p style="color: var(--text-muted); margin-bottom: 24px;">กรุณาเข้าสู่ระบบเพื่อจัดการพื้นที่</p>
-            
-            <!-- 🚀 เพิ่ม onkeypress เพื่อดักจับปุ่ม Enter -->
-            <input type="text" id="userId" class="form-input" placeholder="รหัสผู้ใช้งาน (User ID)" onkeypress="if(event.key === 'Enter') handleLogin()">
-            <input type="password" id="password" class="form-input" placeholder="รหัสผ่าน (Password)" onkeypress="if(event.key === 'Enter') handleLogin()">
-            
-            <button id="btnLogin" class="btn btn-primary btn-w-full" style="padding: 14px;" onclick="handleLogin()">เข้าสู่ระบบ</button>
-            <p id="loginError" style="color: var(--danger); display: none; font-size:14px; margin-top:16px; font-weight: 500;"></p>
-        </div>
-    </div>
+        #loginSection { width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background: var(--bg-body); padding: 20px; box-sizing: border-box; }
+        .login-box { background: var(--bg-surface); padding: 40px; border-radius: 1.5rem; box-shadow: var(--shadow-md); width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); }
+        .login-box h2 { font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; }
         
         /* 📱 Forms & Inputs */
         .form-input { width: 100%; padding: 12px 16px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 0.75rem; box-sizing: border-box; font-size: 15px; font-family: inherit; transition: all 0.2s; background: var(--bg-sub); color: var(--text-main); }
@@ -159,7 +148,7 @@
             .mobile-header-left { display: flex; align-items: center; gap: 12px; }
             .desktop-title { display: none; }
             .topbar { padding: 16px; }
-            .user-details { display: none; } /* Hide user details on mobile topbar */
+            .user-details { display: none; } 
             
             .sidebar { position: fixed; top: 0; left: -280px; height: 100vh; z-index: 2000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
             .sidebar.open { left: 0; }
@@ -188,8 +177,8 @@
         <div class="login-box">
             <h2 style="font-size: 28px;">STMS Survey</h2>
             <p style="color: var(--text-muted); margin-bottom: 24px;">กรุณาเข้าสู่ระบบเพื่อจัดการพื้นที่</p>
-            <input type="text" id="userId" class="form-input" placeholder="รหัสผู้ใช้งาน (User ID)">
-            <input type="password" id="password" class="form-input" placeholder="รหัสผ่าน (Password)">
+            <input type="text" id="userId" class="form-input" placeholder="รหัสผู้ใช้งาน (User ID)" onkeypress="if(event.key === 'Enter') handleLogin()">
+            <input type="password" id="password" class="form-input" placeholder="รหัสผ่าน (Password)" onkeypress="if(event.key === 'Enter') handleLogin()">
             <button id="btnLogin" class="btn btn-primary btn-w-full" style="padding: 14px;" onclick="handleLogin()">เข้าสู่ระบบ</button>
             <p id="loginError" style="color: var(--danger); display: none; font-size:14px; margin-top:16px; font-weight: 500;"></p>
         </div>
@@ -413,6 +402,7 @@
     </div>
 
     <script>
+        // ⚠️ Web App URL ของคุณ
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
@@ -487,7 +477,6 @@
             document.getElementById('sidebarOverlay').classList.toggle('active');
         }
 
-        // 🚀 Switch Menu & Update Topbar Title
         function switchMenu(targetMenuId, title = '') {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
@@ -526,7 +515,6 @@
             document.getElementById('loginSection').style.display = 'none'; 
             document.getElementById('mainApp').style.display = 'flex'; 
             
-            // อัปเดตข้อมูลบน Top Navbar
             document.getElementById('userNameDisplay').innerText = currentUser.name; 
             document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
             document.getElementById('userAvatar').innerText = currentUser.name.charAt(0).toUpperCase();
