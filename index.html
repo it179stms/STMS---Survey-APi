@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,114 +14,161 @@
 
     <style>
         /* =========================================
-           Tailwind-Inspired Design System
+           Tailwind-Inspired & Dark Mode System
            ========================================= */
         :root {
+            /* Brand Colors */
             --primary: #2563eb; --primary-hover: #1d4ed8;
             --danger: #ef4444;  --danger-hover: #dc2626;
             --success: #10b981; --success-hover: #059669;
             --warning: #f59e0b; --warning-hover: #d97706;
             --gray: #6b7280;    --gray-hover: #4b5563;
-            --bg-body: #f3f4f6; --bg-sidebar: #111827; --bg-surface: #ffffff;
-            --text-main: #1f2937; --text-muted: #6b7280;
+            
+            /* Light Theme */
+            --bg-body: #f3f4f6;
+            --bg-surface: #ffffff;
+            --bg-sub: #f9fafb;
+            --bg-hover: #f3f4f6;
+            --bg-sidebar: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
             --border: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
         }
 
-        body { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        html.dark {
+            /* Dark Theme */
+            --bg-body: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-sub: #334155;
+            --bg-hover: #334155;
+            --bg-sidebar: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.5);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -1px rgba(0,0,0,0.4);
+        }
+
+        body { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
         
-        /* 🔒 Login Box (Modern SaaS Style) */
+        /* 🔒 Login Box */
         #loginSection { width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background: var(--bg-body); padding: 20px; box-sizing: border-box; }
-        .login-box { background: var(--bg-surface); padding: 40px; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); }
-        .login-box h2 { font-weight: 700; color: #111827; margin-bottom: 0.5rem; }
+        .login-box { background: var(--bg-surface); padding: 40px; border-radius: 1.5rem; box-shadow: var(--shadow-md); width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border); }
+        .login-box h2 { font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; }
         
         /* 📱 Forms & Inputs */
-        .form-input { width: 100%; padding: 12px 16px; margin: 8px 0 16px; border: 1px solid var(--border); border-radius: 0.75rem; box-sizing: border-box; font-size: 15px; font-family: inherit; transition: all 0.2s; background: #f9fafb; color: var(--text-main); }
-        .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); background: #ffffff; }
+        .form-input { width: 100%; padding: 12px 16px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 0.75rem; box-sizing: border-box; font-size: 15px; font-family: inherit; transition: all 0.2s; background: var(--bg-sub); color: var(--text-main); }
+        .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15); background: var(--bg-surface); }
         
         /* 🎯 Buttons */
-        .btn { padding: 10px 18px; border-radius: 0.75rem; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+        .btn { padding: 10px 18px; border-radius: 0.75rem; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-shadow: var(--shadow-sm); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-w-full { width: 100%; }
         .btn-primary { background: var(--primary); color: white; } .btn-primary:hover { background: var(--primary-hover); }
         .btn-danger { background: var(--danger); color: white; } .btn-danger:hover { background: var(--danger-hover); }
         .btn-success { background: var(--success); color: white; } .btn-success:hover { background: var(--success-hover); }
         .btn-warning { background: var(--warning); color: white; } .btn-warning:hover { background: var(--warning-hover); }
-        .btn-gray { background: var(--gray); color: white; } .btn-gray:hover { background: var(--gray-hover); }
+        .btn-gray { background: var(--bg-sub); color: var(--text-main); border: 1px solid var(--border); } .btn-gray:hover { background: var(--border); }
         .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 0.5rem; }
 
         /* 📋 Badges */
         .badge { padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; display: inline-block; }
-        .badge-green { background: #d1fae5; color: #065f46; }
-        .badge-red { background: #fee2e2; color: #991b1b; }
-        .badge-yellow { background: #fef3c7; color: #92400e; }
-        .badge-gray { background: #f3f4f6; color: #374151; }
+        html:not(.dark) .badge-green { background: #d1fae5; color: #065f46; }
+        html.dark .badge-green { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        
+        html:not(.dark) .badge-red { background: #fee2e2; color: #991b1b; }
+        html.dark .badge-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        
+        html:not(.dark) .badge-yellow { background: #fef3c7; color: #92400e; }
+        html.dark .badge-yellow { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        
+        html:not(.dark) .badge-gray { background: #f3f4f6; color: #374151; }
+        html.dark .badge-gray { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
 
-        /* 🗂 Layout */
+        /* 🗂 Layout (Next.js App Style) */
         #mainApp { display: none; width: 100%; height: 100vh; flex-direction: row; overflow: hidden; }
-        .sidebar { width: 280px; background: var(--bg-sidebar); color: #f3f4f6; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 4px 0 15px rgba(0,0,0,0.05); z-index: 10; }
-        .sidebar-header { padding: 24px; border-bottom: 1px solid #374151; display: flex; align-items: center; justify-content: space-between; }
-        .sidebar-header h3 { margin: 0; font-weight: 700; font-size: 20px; color: white; letter-spacing: 0.5px; }
+        .sidebar { width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; transition: background-color 0.3s; }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .sidebar-header h3 { margin: 0; font-weight: 700; font-size: 20px; color: var(--text-main); letter-spacing: 0.5px; }
         .menu-list { flex: 1; padding: 16px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .menu-item { padding: 12px 16px; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; color: #9ca3af; font-weight: 500; display: flex; align-items: center; gap: 10px; }
-        .menu-item:hover { background: #1f2937; color: white; }
+        .menu-item { padding: 12px 16px; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 10px; }
+        .menu-item:hover { background: var(--bg-hover); color: var(--text-main); }
         .menu-item.active { background: var(--primary); color: white; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
-        .user-info { padding: 20px; border-top: 1px solid #374151; background: #1f2937; text-align: center; }
+        
+        /* 🔝 Top Navbar */
+        .topbar { background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 16px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .user-profile { display: flex; align-items: center; gap: 12px; border-left: 1px solid var(--border); padding-left: 16px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; }
+        .user-details { display: flex; flex-direction: column; }
+        .theme-toggle { background: var(--bg-sub); border: 1px solid var(--border); color: var(--text-main); font-size: 18px; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .theme-toggle:hover { background: var(--border); }
         
         .content-area { flex: 1; padding: 30px; padding-bottom: 100px; overflow-y: auto; }
         .content-section { display: none; animation: fadeIn 0.3s ease-out; } 
         .content-section.active { display: block; } 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .card { background: var(--bg-surface); padding: 24px; border-radius: 1rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); margin-bottom: 24px; }
-        .card-title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 16px; margin-top: 0; display: flex; align-items: center; justify-content: space-between; }
+        .card { background: var(--bg-surface); padding: 24px; border-radius: 1rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 24px; }
+        .card-title { font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 16px; margin-top: 0; display: flex; align-items: center; justify-content: space-between; }
         
         /* 📊 Table (Modern Tailwind Style) */
-        .table-wrapper { border: 1px solid var(--border); border-radius: 0.75rem; overflow-x: auto; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px; background: white; }
-        thead { background: #f9fafb; border-bottom: 1px solid var(--border); }
-        th { padding: 14px 16px; font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
-        td { padding: 16px; border-bottom: 1px solid var(--border); color: #111827; vertical-align: middle; }
-        tbody tr:hover { background-color: #f9fafb; }
+        .table-wrapper { border: 1px solid var(--border); border-radius: 0.75rem; overflow-x: auto; box-shadow: var(--shadow-sm); }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 800px; background: var(--bg-surface); }
+        thead { background: var(--bg-sub); border-bottom: 1px solid var(--border); }
+        th { padding: 14px 16px; font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+        td { padding: 16px; border-bottom: 1px solid var(--border); color: var(--text-main); vertical-align: middle; }
+        tbody tr:hover { background-color: var(--bg-hover); }
         
         /* 📑 Tabs */
-        .tab-header { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; gap: 20px; }
-        .tab-btn { padding: 12px 4px; cursor: pointer; border: none; background: none; font-size: 15px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s; }
-        .tab-btn:hover { color: #111827; }
+        .tab-header { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-sub); padding: 0 24px; }
+        .tab-btn { padding: 16px 24px; cursor: pointer; border: none; background: none; font-size: 15px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s; margin-bottom: -1px; }
+        .tab-btn:hover { color: var(--text-main); }
         .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         
         /* 🪟 Modals (SweetAlert-like) */
         .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center; animation: fadeIn 0.2s ease-out; }
-        .modal-content { background: white; padding: 32px; border-radius: 1.5rem; width: 90%; max-width: 450px; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); }
-        .close-btn { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: #9ca3af; border:none; background:none; transition: color 0.2s; padding: 4px;}
-        .close-btn:hover { color: #111827; }
+        .modal-content { background: var(--bg-surface); padding: 32px; border-radius: 1.5rem; width: 90%; max-width: 450px; position: relative; box-shadow: var(--shadow-md); border: 1px solid var(--border); }
+        .close-btn { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: var(--text-muted); border:none; background:none; transition: color 0.2s; padding: 4px;}
+        .close-btn:hover { color: var(--text-main); }
         
-        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; max-height: 200px; overflow-y: auto; background: #f9fafb; padding: 16px; border-radius: 0.75rem; border: 1px solid var(--border); }
-        .checkbox-group label { display: flex; align-items: center; font-size: 14px; gap: 8px; cursor: pointer; color: #374151; font-weight: 500; }
-        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; border-radius: 4px; border: 1px solid #d1d5db; }
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 16px; max-height: 200px; overflow-y: auto; background: var(--bg-sub); padding: 16px; border-radius: 0.75rem; border: 1px solid var(--border); }
+        .checkbox-group label { display: flex; align-items: center; font-size: 14px; gap: 8px; cursor: pointer; color: var(--text-main); font-weight: 500; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border); }
 
         /* 📱 Mobile Responsive */
-        .mobile-header { display: none; background: #ffffff; border-bottom: 1px solid var(--border); color: #111827; padding: 16px 20px; align-items: center; justify-content: space-between; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
-        .menu-toggle { background: #f3f4f6; border: none; color: #374151; font-size: 20px; cursor: pointer; padding: 8px 12px; border-radius: 8px; }
-        .mobile-close-btn { display: none; background: #374151; border: none; color: white; padding: 8px; border-radius: 8px; cursor: pointer; }
+        .mobile-header-left { display: none; }
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(2px); z-index: 1999; }
         
         @media (max-width: 768px) {
-            .mobile-header { display: flex; }
-            .mobile-close-btn { display: block; }
+            .mobile-header-left { display: flex; align-items: center; gap: 12px; }
+            .desktop-title { display: none; }
+            .topbar { padding: 16px; }
+            .user-details { display: none; } /* Hide user details on mobile topbar */
+            
             .sidebar { position: fixed; top: 0; left: -280px; height: 100vh; z-index: 2000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
             .sidebar.open { left: 0; }
             .sidebar-overlay.active { display: block; }
             .content-area { padding: 16px; padding-bottom: 120px; height: calc(100vh - 70px); }
             .card { padding: 20px; }
-            .tab-header { gap: 0; justify-content: space-between; }
+            
+            #menu1-grid > .card { min-width: 100% !important; }
+            .tab-header { padding: 0 10px; justify-content: space-between; }
             .tab-btn { padding: 12px; font-size: 14px; width: 50%; text-align: center; }
             th, td { padding: 12px 10px !important; font-size: 13px !important; white-space: nowrap; }
+            
             #menu2 .card > div:first-child { flex-direction: column; align-items: stretch; gap: 12px; }
             #menu2 .card > div:first-child button, #menu2 .card > div:first-child select { width: 100%; margin: 0; }
         }
         
-        /* 🪄 SweetAlert Custom Font */
+        /* 🪄 SweetAlert Custom Font & Dark Mode Compatibility */
         .swal2-popup { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif !important; border-radius: 1.25rem !important; }
+        html.dark .swal2-popup { background: var(--bg-surface); color: var(--text-main); }
+        html.dark .swal2-title, html.dark .swal2-html-container { color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -144,37 +191,50 @@
         <!-- Sidebar -->
         <div class="sidebar" id="appSidebar">
             <div class="sidebar-header">
-                <h3>QR Survey<br><span style="font-size: 13px; color: #9ca3af; font-weight: 400;">Contract Center UI</span></h3>
-                <button class="mobile-close-btn" onclick="toggleMobileMenu()">✖</button>
+                <h3>QR Survey<br><span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">Contract Center UI</span></h3>
             </div>
             <div class="menu-list">
-                <div class="menu-item active" onclick="switchMenu('menu1')">📱 สร้างและจัดการ QR Code</div>
-                <div class="menu-item" onclick="switchMenu('menu2')">📊 Dashboard & Report</div>
-                <div class="menu-item" id="navMenu3" onclick="switchMenu('menu3')" style="display: none;">⚙️ User & Project Mgt</div>
-                <div class="menu-item" onclick="switchMenu('menu4')">📝 Logs ประวัติการทำงาน</div>
-            </div>
-            <div class="user-info">
-                <div id="userNameDisplay" style="font-weight: 600; color: white;">Name</div>
-                <div id="userRoleDisplay" style="color:#9ca3af; font-size:13px; margin-bottom: 12px;">Role</div>
-                <button class="btn btn-danger btn-w-full" onclick="confirmLogout()">ออกจากระบบ</button>
+                <div class="menu-item active" onclick="switchMenu('menu1', 'จัดการ QR แบบประเมิน')">📱 สร้างและจัดการ QR Code</div>
+                <div class="menu-item" onclick="switchMenu('menu2', 'Dashboard & Report')">📊 Dashboard & Report</div>
+                <div class="menu-item" id="navMenu3" onclick="switchMenu('menu3', 'User & Project Management')" style="display: none;">⚙️ User & Project Mgt</div>
+                <div class="menu-item" onclick="switchMenu('menu4', 'Logs ประวัติการทำงาน')">📝 Logs ประวัติการทำงาน</div>
             </div>
         </div>
 
         <!-- Content Area -->
         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%;">
             
-            <!-- Mobile Header -->
-            <div class="mobile-header">
-                <h3 style="margin:0; font-size: 18px; font-weight: 700; color: var(--primary);">STMS Admin</h3>
-                <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            <!-- 🔝 Top Navbar (Modern Layout) -->
+            <div class="topbar">
+                <!-- ฝั่งซ้าย: ปุ่มมือถือ + ชื่อหน้าปัจจุบัน -->
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div class="mobile-header-left">
+                        <button onclick="toggleMobileMenu()" class="btn btn-gray btn-sm" style="font-size: 20px; padding: 4px 10px;">☰</button>
+                    </div>
+                    <h2 id="pageTitle" class="desktop-title" style="margin:0; font-size: 20px; font-weight: 700; color: var(--text-main);">จัดการ QR แบบประเมิน</h2>
+                </div>
+                
+                <!-- ฝั่งขวา: Dark Mode + User Profile -->
+                <div class="topbar-right">
+                    <button class="theme-toggle" onclick="toggleTheme()" title="สลับโหมดมืด/สว่าง">
+                        <span id="themeIcon">☀️</span>
+                    </button>
+                    
+                    <div class="user-profile">
+                        <div class="user-details" style="text-align: right;">
+                            <div id="userNameDisplay" style="font-weight: 600; font-size: 14px; color: var(--text-main);">Name</div>
+                            <div id="userRoleDisplay" style="color:var(--text-muted); font-size:12px;">Role</div>
+                        </div>
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <button onclick="confirmLogout()" class="btn btn-danger btn-sm" style="margin-left: 8px;">ออก</button>
+                    </div>
+                </div>
             </div>
 
             <div class="content-area">
-                
                 <!-- 📦 Menu 1 -->
                 <div id="menu1" class="content-section active">
-                    <h2 class="card-title" style="font-size: 24px; margin-bottom: 24px; border:none;">จัดการ QR แบบประเมิน</h2>
-                    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                    <div id="menu1-grid" style="display: flex; gap: 24px; flex-wrap: wrap;">
                         <div class="card" style="flex: 1; min-width: 300px; max-height: max-content;">
                             <h3 class="card-title">สร้าง QR Code พื้นที่ใหม่</h3>
                             <select id="projectSelect" class="form-input" onchange="loadZones()"><option value="">-- เลือกโครงการ --</option></select>
@@ -182,15 +242,18 @@
                                 <input type="text" id="zoneName" class="form-input" placeholder="ระบุชื่อพื้นที่ (เช่น ล็อบบี้ อาคาร A)">
                                 <button id="btnCreateQR" class="btn btn-success btn-w-full" onclick="generateQR()">+ ยืนยันการสร้าง QR</button>
                             </div>
-                            <div id="qrResult" style="display: none; margin-top: 24px; text-align: center; border: 1px dashed var(--border); padding: 24px; border-radius: 12px; background: #f9fafb;">
+                            <div id="qrResult" style="display: none; margin-top: 24px; text-align: center; border: 1px dashed var(--border); padding: 24px; border-radius: 12px; background: var(--bg-sub);">
                                 <h4 id="qrTitle" style="margin-top:0; color: var(--primary); font-weight: 600;"></h4>
-                                <div id="qrcode" style="display:flex; justify-content:center; margin:16px 0;"></div>
-                                <input type="text" id="qrLink" class="form-input" readonly style="text-align:center; background:#e5e7eb; cursor: copy;" onclick="copyLink()">
+                                <!-- ใส่กรอบสีขาวให้ QR Code เสมอ เพื่อให้อ่านออกใน Dark Mode -->
+                                <div style="display:inline-block; padding: 10px; background: white; border-radius: 8px; margin: 16px 0;">
+                                    <div id="qrcode"></div>
+                                </div>
+                                <input type="text" id="qrLink" class="form-input" readonly style="text-align:center; cursor: copy;" onclick="copyLink()">
                                 <button onclick="copyLink()" class="btn btn-gray btn-sm">🔗 คัดลอกลิงก์</button>
                             </div>
                         </div>
                         
-                        <div class="card" style="flex: 2; min-width: 100%; overflow: hidden; padding: 0;">
+                        <div class="card" style="flex: 2; min-width: 450px; overflow: hidden; padding: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border);">
                                 <h3 class="card-title" style="margin:0;">รายการโซนและ QR Code</h3>
                                 <button onclick="fetchZoneList()" class="btn btn-gray btn-sm">🔄 รีเฟรช</button>
@@ -207,8 +270,6 @@
 
                 <!-- 📊 Menu 2 -->
                 <div id="menu2" class="content-section">
-                    <h2 class="card-title" style="font-size: 24px; margin-bottom: 24px;">Dashboard & รายงานการประเมิน</h2>
-                    
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 24px;">
                         <div class="card" style="text-align: center; padding: 24px;">
                             <h4 style="margin:0; color:var(--text-muted); font-weight: 500;">ทั้งหมด</h4>
@@ -225,7 +286,7 @@
                     </div>
                     
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 20px 24px; background: #f9fafb; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 20px 24px; background: var(--bg-sub); border-bottom: 1px solid var(--border);">
                             <select id="filterProject" class="form-input" style="flex:1; min-width:180px; margin:0;" onchange="filterSurveys()"><option value="all">-- ทุกโครงการ --</option></select>
                             <select id="filterRating" class="form-input" style="flex:1; min-width:160px; margin:0;" onchange="filterSurveys()">
                                 <option value="all">-- ทุกคะแนน --</option><option value="5">5 ดาว</option><option value="4">4 ดาว</option><option value="3">3 ดาว</option><option value="2">2 ดาว</option><option value="1">1 ดาว</option>
@@ -236,8 +297,8 @@
                             
                             <div style="display: flex; gap: 8px;">
                                 <button onclick="fetchSurveyData()" class="btn btn-gray">🔄</button>
-                                <button onclick="printDashboardReport()" class="btn btn-primary">🖨️ พิมพ์รายงาน</button>
-                                <button onclick="exportDashboardCSV()" class="btn btn-success">📊 Export CSV</button>
+                                <button onclick="printDashboardReport()" class="btn btn-primary">🖨️ พิมพ์</button>
+                                <button onclick="exportDashboardCSV()" class="btn btn-success">📊 Export</button>
                             </div>
                         </div>
                         <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
@@ -251,48 +312,47 @@
 
                 <!-- ⚙️ Menu 3 -->
                 <div id="menu3" class="content-section">
-                    <h2 class="card-title" style="font-size: 24px; margin-bottom: 24px;">User & Project Management</h2>
-                    
-                    <div class="tab-header">
-                        <button class="tab-btn active" onclick="switchAdminTab('tab-users')">👥 จัดการผู้ใช้งาน (Users)</button>
-                        <button class="tab-btn" onclick="switchAdminTab('tab-projects')">🏢 จัดการโครงการ (Projects)</button>
-                    </div>
-                    
-                    <!-- Tab Users -->
-                    <div id="tab-users" class="tab-content active card" style="padding: 0; overflow: hidden;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border);">
-                            <h3 class="card-title" style="margin:0;">รายชื่อผู้ใช้งาน</h3>
-                            <button onclick="openUserModal()" class="btn btn-success">+ เพิ่มผู้ใช้งาน</button>
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        
+                        <div class="tab-header">
+                            <button class="tab-btn active" onclick="switchAdminTab('tab-users')">👥 จัดการผู้ใช้งาน (Users)</button>
+                            <button class="tab-btn" onclick="switchAdminTab('tab-projects')">🏢 จัดการโครงการ (Projects)</button>
                         </div>
-                        <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-                            <table>
-                                <thead><tr><th>User ID</th><th>ชื่อพนักงาน</th><th style="text-align:center;">สถานะ</th><th style="text-align:center;">จัดการ</th></tr></thead>
-                                <tbody id="adminUserTable"><tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลด...</td></tr></tbody>
-                            </table>
+                        
+                        <!-- Tab Users -->
+                        <div id="tab-users" class="tab-content active">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border);">
+                                <h3 style="margin:0; font-size: 16px; color: var(--text-muted); font-weight: 500;">รายชื่อและสิทธิ์ผู้ใช้งานทั้งหมดในระบบ</h3>
+                                <button onclick="openUserModal()" class="btn btn-success btn-sm">+ เพิ่มผู้ใช้งาน</button>
+                            </div>
+                            <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
+                                <table>
+                                    <thead><tr><th>User ID</th><th>ชื่อพนักงาน</th><th style="text-align:center;">สถานะ</th><th style="text-align:center;">จัดการ</th></tr></thead>
+                                    <tbody id="adminUserTable"><tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลด...</td></tr></tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- Tab Projects -->
-                    <div id="tab-projects" class="tab-content card" style="padding: 0; overflow: hidden;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border);">
-                            <h3 class="card-title" style="margin:0;">รายชื่อโครงการ</h3>
-                            <button onclick="openProjectModal()" class="btn btn-primary">+ เพิ่มโครงการ</button>
-                        </div>
-                        <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
-                            <table>
-                                <thead><tr><th>รหัส</th><th>ชื่อโครงการ</th><th style="text-align:center;">สถานะ</th><th style="text-align:center;">จัดการ</th></tr></thead>
-                                <tbody id="adminProjectTable"><tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลด...</td></tr></tbody>
-                            </table>
+                        
+                        <!-- Tab Projects -->
+                        <div id="tab-projects" class="tab-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border);">
+                                <h3 style="margin:0; font-size: 16px; color: var(--text-muted); font-weight: 500;">รายชื่อโครงการทั้งหมดที่เปิดให้บริการ</h3>
+                                <button onclick="openProjectModal()" class="btn btn-primary btn-sm">+ เพิ่มโครงการ</button>
+                            </div>
+                            <div class="table-wrapper" style="border: none; border-radius: 0; box-shadow: none;">
+                                <table>
+                                    <thead><tr><th>รหัส</th><th>ชื่อโครงการ</th><th style="text-align:center;">สถานะ</th><th style="text-align:center;">จัดการ</th></tr></thead>
+                                    <tbody id="adminProjectTable"><tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลด...</td></tr></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 📝 Menu 4 -->
                 <div id="menu4" class="content-section">
-                    <h2 class="card-title" style="font-size: 24px; margin-bottom: 24px;">Logs ประวัติการทำงาน</h2>
-                    
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); background: #f9fafb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--bg-sub);">
                             <h3 class="card-title" style="margin:0;">System Activity Logs</h3>
                             <button id="btnRefreshLogs" onclick="fetchLogs()" class="btn btn-gray btn-sm">🔄 รีเฟรชข้อมูล</button>
                         </div>
@@ -309,83 +369,79 @@
     </div>
     
     <!-- 🪟 Modals -->
-    <!-- Modal Project -->
     <div id="modalProject" class="modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModals()">✖</button>
             <h3 id="modalProjectTitle" style="margin-top:0; color: var(--primary); font-size: 22px; font-weight: 700;">🏢 เพิ่มโครงการใหม่</h3>
             <p style="font-size:13px; color:var(--text-muted); margin-bottom: 20px;">ระบบจะสร้างรหัสโครงการให้อัตโนมัติ</p>
-            <label style="font-size: 14px; font-weight: 600; color: #374151;">ชื่อโครงการ</label>
+            <label style="font-size: 14px; font-weight: 600; color: var(--text-main); display:block; margin-bottom:6px;">ชื่อโครงการ</label>
             <input type="text" id="modalProjName" class="form-input" placeholder="ระบุชื่อโครงการ">
             <button id="btnSaveProject" class="btn btn-primary btn-w-full" onclick="submitProjectModal()" style="padding: 12px; font-size: 16px;">บันทึกข้อมูล</button>
         </div>
     </div>
 
-    <!-- Modal User -->
     <div id="modalUser" class="modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModals()">✖</button>
             <h3 id="modalUserTitle" style="margin-top:0; color: var(--success); font-size: 22px; font-weight: 700;">👤 เพิ่มผู้ใช้งานใหม่</h3>
-            
             <div style="display: flex; flex-direction: column; gap: 4px;">
                 <input type="text" id="modalUserId" class="form-input" placeholder="รหัสผู้ใช้งาน (Username)">
                 <input type="text" id="modalUserName" class="form-input" placeholder="ชื่อ - นามสกุล">
                 <input type="password" id="modalUserPwd" class="form-input" placeholder="รหัสผ่าน">
-                
                 <select id="modalUserRole" class="form-input" onchange="toggleProjectSelection()">
                     <option value="staff">พนักงานทั่วไป (Staff)</option>
                     <option value="admin">ผู้ดูแลระบบ (Admin)</option>
                 </select>
-                
-                <div id="projectAssignmentSection" style="margin-top: 8px;">
-                    <label style="font-size: 14px; font-weight: 600; color: #374151;">🔗 กำหนดสิทธิ์โครงการ</label>
+                <div id="projectAssignmentSection" style="margin-top: 4px;">
+                    <label style="font-size: 14px; font-weight: 600; color: var(--text-main);">🔗 กำหนดสิทธิ์โครงการ</label>
                     <div id="modalProjectCheckboxes" class="checkbox-group"></div>
                 </div>
             </div>
-            
-            <button id="btnSaveUser" class="btn btn-success btn-w-full" onclick="submitUserModal()" style="padding: 12px; font-size: 16px; margin-top: 16px;">บันทึกข้อมูลผู้ใช้</button>
+            <button id="btnSaveUser" class="btn btn-success btn-w-full" onclick="submitUserModal()" style="padding: 12px; font-size: 16px; margin-top: 8px;">บันทึกข้อมูลผู้ใช้</button>
         </div>
     </div>
 
     <script>
-        // ⚠️ Web App URL เดิม
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         let currentUser = null;
 
-        // 🚀 SweetAlert Helpers
-        const Toast = Swal.mixin({
-            toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true
-        });
+        // 🌙 Dark Mode System
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('stms_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeIcon').innerText = isDark ? '🌙' : '☀️';
+        }
+        
+        // 🚀 Initialize Theme
+        const savedTheme = localStorage.getItem('stms_theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.addEventListener("DOMContentLoaded", () => document.getElementById('themeIcon').innerText = '🌙');
+        }
 
+        // 🚀 SweetAlert Helpers
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
         async function confirmAction(title, text, confirmText = 'ยืนยัน', isDanger = false) {
             const result = await Swal.fire({
-                title: title, text: text, icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: isDanger ? '#ef4444' : '#2563eb',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: confirmText,
-                cancelButtonText: 'ยกเลิก'
+                title: title, text: text, icon: 'warning', showCancelButton: true,
+                confirmButtonColor: isDanger ? '#ef4444' : '#2563eb', cancelButtonColor: '#6b7280',
+                confirmButtonText: confirmText, cancelButtonText: 'ยกเลิก'
             });
             return result.isConfirmed;
         }
 
-        // 🚀 ระบบจัดการ Session Timeout (30 นาที)
+        // 🚀 Session Timeout (30 นาที)
         const SESSION_TIMEOUT = 30 * 60 * 1000; 
         let inactivityTimer;
-
         function resetTimer() {
             if (!currentUser) return; 
             clearTimeout(inactivityTimer);
             localStorage.setItem('stms_last_activity', Date.now().toString()); 
-            
             inactivityTimer = setTimeout(() => {
-                Swal.fire({
-                    title: 'เซสชันหมดอายุ', text: 'ไม่ได้ใช้งานเกิน 30 นาที กรุณาเข้าสู่ระบบใหม่', icon: 'info',
-                    confirmButtonText: 'ตกลง', confirmButtonColor: '#2563eb'
-                }).then(() => { logout(); });
+                Swal.fire({ title: 'เซสชันหมดอายุ', text: 'ไม่ได้ใช้งานเกิน 30 นาที กรุณาเข้าสู่ระบบใหม่', icon: 'info', confirmButtonText: 'ตกลง', confirmButtonColor: '#2563eb' }).then(() => { logout(); });
             }, SESSION_TIMEOUT);
         }
-
         ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => document.addEventListener(evt, resetTimer, true));
 
         window.addEventListener('load', () => {
@@ -393,8 +449,7 @@
             const lastActivity = localStorage.getItem('stms_last_activity');
             if (savedUser && lastActivity) {
                 if (Date.now() - parseInt(lastActivity) < SESSION_TIMEOUT) {
-                    currentUser = JSON.parse(savedUser);
-                    setupApp();
+                    currentUser = JSON.parse(savedUser); setupApp();
                 } else {
                     localStorage.removeItem('stms_user'); localStorage.removeItem('stms_last_activity');
                 }
@@ -421,17 +476,17 @@
             document.getElementById('sidebarOverlay').classList.toggle('active');
         }
 
-        function switchMenu(targetMenuId) {
+        // 🚀 Switch Menu & Update Topbar Title
+        function switchMenu(targetMenuId, title = '') {
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             document.getElementById(targetMenuId).classList.add('active'); 
+            if(title) document.getElementById('pageTitle').innerText = title;
             
             const activeBtn = document.querySelector(`.menu-item[onclick*="${targetMenuId}"]`);
             if (activeBtn) activeBtn.classList.add('active');
             
-            if (window.innerWidth <= 768 && document.getElementById('appSidebar').classList.contains('open')) {
-                toggleMobileMenu();
-            }
+            if (window.innerWidth <= 768 && document.getElementById('appSidebar').classList.contains('open')) toggleMobileMenu();
             
             if (targetMenuId === 'menu1') fetchZoneList();
             if (targetMenuId === 'menu2') fetchSurveyData();
@@ -451,9 +506,7 @@
                     localStorage.setItem('stms_last_activity', Date.now().toString());
                     Toast.fire({ icon: 'success', title: `ยินดีต้อนรับ ${currentUser.name}` });
                     setupApp(); 
-                } else { 
-                    Swal.fire({ title: 'เข้าสู่ระบบล้มเหลว', text: result.message, icon: 'error', confirmButtonColor: '#ef4444' }); 
-                }
+                } else { Swal.fire({ title: 'เข้าสู่ระบบล้มเหลว', text: result.message, icon: 'error', confirmButtonColor: '#ef4444' }); }
             } catch (err) { Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error'); } 
             finally { btn.innerText = 'เข้าสู่ระบบ'; btn.disabled = false; }
         }
@@ -461,28 +514,23 @@
         function setupApp() {
             document.getElementById('loginSection').style.display = 'none'; 
             document.getElementById('mainApp').style.display = 'flex'; 
+            
+            // อัปเดตข้อมูลบน Top Navbar
             document.getElementById('userNameDisplay').innerText = currentUser.name; 
             document.getElementById('userRoleDisplay').innerText = `Role: ${currentUser.role}`;
+            document.getElementById('userAvatar').innerText = currentUser.name.charAt(0).toUpperCase();
+            
             document.getElementById('navMenu3').style.display = (currentUser.role === 'admin') ? 'flex' : 'none';
-            
-            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            document.getElementById('menu1').classList.add('active'); 
-            document.querySelector('.menu-item[onclick*="menu1"]').classList.add('active');
-            
-            fetchProjects();
-            resetTimer();
+            switchMenu('menu1', 'จัดการ QR แบบประเมิน');
+            fetchProjects(); resetTimer();
         }
 
-        async function confirmLogout() {
-            if(await confirmAction('ยืนยัน', 'ต้องการออกจากระบบใช่หรือไม่?', 'ออกจากระบบ', true)) logout();
-        }
+        async function confirmLogout() { if(await confirmAction('ยืนยัน', 'ต้องการออกจากระบบใช่หรือไม่?', 'ออกจากระบบ', true)) logout(); }
 
         function logout() { 
             currentUser = null; clearTimeout(inactivityTimer);
             localStorage.removeItem('stms_user'); localStorage.removeItem('stms_last_activity');
-            document.getElementById('loginSection').style.display = 'flex'; 
-            document.getElementById('mainApp').style.display = 'none'; 
+            document.getElementById('loginSection').style.display = 'flex'; document.getElementById('mainApp').style.display = 'none'; 
             document.getElementById('userId').value = ''; document.getElementById('password').value = ''; 
             document.getElementById('zoneTableBody').innerHTML = ''; document.getElementById('surveyTableBody').innerHTML = '';
             document.getElementById('adminProjectTable').innerHTML = ''; document.getElementById('adminUserTable').innerHTML = '';
@@ -522,27 +570,18 @@
             } catch(e) { Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'); } finally { btn.innerText = "+ ยืนยันการสร้าง QR"; btn.disabled = false; }
         }
         
-        function copyLink() {
-            const el = document.getElementById('qrLink');
-            el.select(); document.execCommand("copy");
-            Toast.fire({ icon: 'success', title: 'คัดลอกลิงก์เรียบร้อย' });
-        }
-        
-        function copySpecificLink(url) {
-            const tempInput = document.createElement("input"); tempInput.value = url; document.body.appendChild(tempInput);
-            tempInput.select(); document.execCommand("copy"); document.body.removeChild(tempInput);
-            Toast.fire({ icon: 'success', title: 'คัดลอกลิงก์เรียบร้อย' });
-        }
+        function copyLink() { const el = document.getElementById('qrLink'); el.select(); document.execCommand("copy"); Toast.fire({ icon: 'success', title: 'คัดลอกลิงก์เรียบร้อย' }); }
+        function copySpecificLink(url) { const tempInput = document.createElement("input"); tempInput.value = url; document.body.appendChild(tempInput); tempInput.select(); document.execCommand("copy"); document.body.removeChild(tempInput); Toast.fire({ icon: 'success', title: 'คัดลอกลิงก์เรียบร้อย' }); }
 
         async function fetchZoneList() {
-            const tableBody = document.getElementById('zoneTableBody'); tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังโหลดข้อมูล...</td></tr>';
+            const tableBody = document.getElementById('zoneTableBody'); tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังโหลดข้อมูล...</td></tr>';
             const selectedProject = document.getElementById('projectSelect').value; let url = `${API_URL}?action=getZones`; if (selectedProject) url += `&project_id=${selectedProject}`;
             try {
                 const result = await safeFetch(url); tableBody.innerHTML = ''; 
                 if (result.status === 'success' && result.data.length > 0) {
                     let allowedZones = result.data; 
                     if (currentUser.role !== 'admin') allowedZones = result.data.filter(z => currentUser.projects.includes(z.project_id));
-                    if (allowedZones.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">ไม่พบข้อมูลโซน</td></tr>'; return; }
+                    if (allowedZones.length === 0) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">ไม่พบข้อมูลโซน</td></tr>'; return; }
                     
                     allowedZones.forEach(zone => {
                         const tr = document.createElement('tr');
@@ -554,15 +593,15 @@
                             <td>${badge}</td>
                             <td style="text-align: center;">
                                 <div style="display:flex; justify-content:center; gap:6px;">
-                                    <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" class="btn btn-blue btn-sm">🖨️ พิมพ์</button>
+                                    <button onclick="printQR('${zone.zone_id}', '${zone.zone_name}', '${surveyUrl}')" class="btn btn-primary btn-sm">🖨️ พิมพ์</button>
                                     <button onclick="copySpecificLink('${surveyUrl}')" class="btn btn-gray btn-sm">🔗 ลิงก์</button>
                                     <button onclick="deleteZone('${zone.zone_id}')" class="btn btn-danger btn-sm">🗑️ ลบ</button>
                                 </div>
                             </td>`;
                         tableBody.appendChild(tr);
                     });
-                } else { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">ยังไม่มีข้อมูล</td></tr>'; }
-            } catch (error) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">อินเทอร์เน็ตมีปัญหา โปรดรีเฟรช</td></tr>'; }
+                } else { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">ยังไม่มีข้อมูล</td></tr>'; }
+            } catch (error) { tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--danger);">อินเทอร์เน็ตมีปัญหา โปรดรีเฟรช</td></tr>'; }
         }
 
         function printQR(zoneId, zoneName, url) {
@@ -570,16 +609,12 @@
             printWindow.document.write(`<html><head><title>Print QR - ${zoneName}</title><style>body { font-family: sans-serif; text-align: center; padding: 50px; } #qr-container { display: flex; justify-content: center; margin-top:20px; }</style><scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr` + `ipt></head><body><h2>สแกนเพื่อประเมินความพึงพอใจ</h2><h3>จุดบริการ: ${zoneName} (${zoneId})</h3><div id="qr-container"></div><scr` + `ipt>new QRCode(document.getElementById("qr-container"), { text: "${url}", width: 250, height: 250 }); setTimeout(() => { window.print(); }, 500);</scr` + `ipt></body></html>`);
             printWindow.document.close();
         }
-        
-        async function deleteZone(zoneId) { 
-            if(await confirmAction('รอการอัปเดต', 'ระบบลบโซน จะพัฒนาในเฟสถัดไปครับ', 'รับทราบ', false)) {} 
-        }
+        async function deleteZone(zoneId) { if(await confirmAction('รอการอัปเดต', 'ระบบลบโซน จะพัฒนาในเฟสถัดไปครับ', 'รับทราบ', false)) {} }
 
         // --- Menu 2 ---
         let allSurveys = []; let currentFilteredSurveys = []; 
-        
         async function fetchSurveyData() {
-            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>';
+            const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>';
             try {
                 const result = await safeFetch(`${API_URL}?action=getSurveyResults`);
                 if (result.status === 'success') {
@@ -587,8 +622,8 @@
                     const selectProj = document.getElementById('filterProject'); selectProj.innerHTML = '<option value="all">-- ทุกโครงการ --</option>';
                     Array.from(document.getElementById('projectSelect').options).slice(1).forEach(opt => { const newOpt = document.createElement('option'); newOpt.value = opt.value; newOpt.innerText = opt.innerText; selectProj.appendChild(newOpt); });
                     filterSurveys(); 
-                } else { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
-            } catch (error) { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว</td></tr>`; }
+                } else { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color:var(--danger);">${result.message}</td></tr>`; }
+            } catch (error) { tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color:var(--danger);">เชื่อมต่อล้มเหลว</td></tr>`; }
         }
         
         function filterSurveys() {
@@ -599,12 +634,12 @@
         
         function renderSurveys(data) {
             const tableBody = document.getElementById('surveyTableBody'); tableBody.innerHTML = '';
-            if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color:var(--text-muted);">ไม่พบข้อมูลประเมินในระบบ</td></tr>'; return; }
+            if (data.length === 0) { tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color:var(--text-muted);">ไม่พบข้อมูลประเมินในระบบ</td></tr>'; return; }
             data.forEach(item => {
                 const tr = document.createElement('tr');
                 const d = new Date(item.created_at); const dateStr = d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
                 const statusHtml = item.status === 'pending' ? `<span class="badge badge-yellow">รอดำเนินการ</span>` : `<span class="badge badge-green">แก้ไขแล้ว</span>`;
-                const actionBtn = item.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="markAsResolved('${item.survey_id}')">✅ แก้ไข</button>` : `<span style="color:#9ca3af; font-size:12px;">เสร็จสิ้น</span>`;
+                const actionBtn = item.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="markAsResolved('${item.survey_id}')">✅ แก้ไข</button>` : `<span style="color:var(--text-muted); font-size:12px; font-weight:600;">เสร็จสิ้น</span>`;
                 
                 tr.innerHTML = `
                     <td>${dateStr}</td>
@@ -612,7 +647,7 @@
                     <td>${item.zone_name}<br><small style="color:var(--text-muted);">${item.zone_id}</small></td>
                     <td style="text-align: center; font-size:12px;">${'⭐'.repeat(parseInt(item.rating) || 0)}<br>(${item.rating})</td>
                     <td>${item.feedback || '-'}</td>
-                    <td>${statusHtml}</td>
+                    <td style="text-align:center;">${statusHtml}</td>
                     <td style="text-align: center;">${actionBtn}</td>
                 `;
                 tableBody.appendChild(tr);
@@ -633,7 +668,7 @@
             }
         }
 
-        function printDashboardReport() { /* โค้ดฟังก์ชันเดิม ใช้งานได้ดีแล้ว */
+        function printDashboardReport() { 
             const printWindow = window.open('', '_blank');
             let tableRows = '';
             (currentFilteredSurveys.length > 0 ? currentFilteredSurveys : allSurveys).forEach(item => {
@@ -645,7 +680,7 @@
             printWindow.document.close();
         }
 
-        function exportDashboardCSV() { /* โค้ดฟังก์ชันเดิม ใช้งานได้ดีแล้ว */
+        function exportDashboardCSV() { 
             const dataToExport = currentFilteredSurveys.length > 0 ? currentFilteredSurveys : allSurveys;
             if (dataToExport.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลสำหรับส่งออก', 'warning');
             let csvContent = "วัน-เวลา,โครงการ,รหัสพื้นที่,ชื่อพื้นที่,คะแนน,ข้อเสนอแนะ,สถานะ\n";
@@ -659,18 +694,24 @@
 
         // --- Menu 3 ---
         let allGlobalProjects = []; let isEditingUser = false;  
-        function switchAdminTab(tabId) { document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById(tabId).classList.add('active'); event.target.classList.add('active'); }
+        
+        function switchAdminTab(tabId) { 
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); 
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); 
+            document.getElementById(tabId).classList.add('active'); 
+            event.target.classList.add('active'); 
+        }
         function closeModals() { document.getElementById('modalProject').style.display = 'none'; document.getElementById('modalUser').style.display = 'none'; }
 
         async function loadAdminTables() {
             const tbodyP = document.getElementById('adminProjectTable'); const tbodyU = document.getElementById('adminUserTable');
-            tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>';
+            tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>';
             try {
                 let result = await safeFetch(`${API_URL}?action=getAdminData`);
                 if(result.status === 'success') {
                     const dataP = result.data.projects; const dataU = result.data.users; const dataA = result.data.assignments;
                     tbodyP.innerHTML = ''; allGlobalProjects = dataP; 
-                    if (dataP.length === 0) tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:var(--text-muted);">ยังไม่มีโครงการ</td></tr>';
+                    if (dataP.length === 0) tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--text-muted);">ยังไม่มีโครงการ</td></tr>';
                     else {
                         dataP.forEach(p => {
                             let statusHtml = String(p.is_active).toUpperCase() === 'TRUE' ? `<span class="badge badge-green">เปิดใช้งาน</span>` : `<span class="badge badge-red">ปิดระบบ</span>`;
@@ -686,7 +727,7 @@
                         });
                     }
                     tbodyU.innerHTML = '';
-                    if (dataU.length === 0) tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:var(--text-muted);">ยังไม่มีผู้ใช้งาน</td></tr>';
+                    if (dataU.length === 0) tbodyU.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--text-muted);">ยังไม่มีผู้ใช้งาน</td></tr>';
                     else {
                         dataU.forEach(u => {
                             let statusHtml = String(u.is_active).toUpperCase() === 'TRUE' ? `<span class="badge badge-green">ปกติ</span>` : `<span class="badge badge-red">ถูกระงับ</span>`;
@@ -704,7 +745,7 @@
                         });
                     }
                 } else { Swal.fire('Error', result.message, 'error'); }
-            } catch(e) { tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว</td></tr>'; }
+            } catch(e) { tbodyP.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color:var(--danger);">เชื่อมต่อล้มเหลว</td></tr>'; }
         }
 
         function openProjectModal() { document.getElementById('modalProjName').value = ''; document.getElementById('modalProject').style.display = 'flex'; }
@@ -716,7 +757,7 @@
             try {
                 const result = await safeFetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'createProject', project_name: pname, actor_id: currentUser.user_id }) });
                 if (result.status === 'success') { Toast.fire({icon: 'success', title: 'บันทึกสำเร็จ'}); closeModals(); loadAdminTables(); fetchProjects(); } else Swal.fire('Error', result.message, 'error');
-            } catch(e) { Swal.fire('Error', 'เชื่อมต่อล้มเหลว', 'error'); } finally { btn.innerText = "บันทึกโครงการ"; btn.disabled = false; }
+            } catch(e) { Swal.fire('Error', 'เชื่อมต่อล้มเหลว', 'error'); } finally { btn.innerText = "บันทึกข้อมูล"; btn.disabled = false; }
         }
 
         async function editProjectName(id, oldName) {
@@ -761,7 +802,7 @@
                     let isChecked = assignedArr.includes(p.project_id) ? 'checked' : '';
                     chkContainer.innerHTML += `<label><input type="checkbox" class="proj-checkbox" value="${p.project_id}" ${isChecked}> ${p.project_name}</label>`;
                 });
-            } else { chkContainer.innerHTML = '<span style="color:#888; font-size:13px;">ไม่พบข้อมูลโครงการในระบบ หรือกำลังโหลดข้อมูล</span>'; }
+            } else { chkContainer.innerHTML = '<span style="color:var(--text-muted); font-size:13px;">ไม่พบข้อมูลโครงการในระบบ หรือกำลังโหลดข้อมูล</span>'; }
             toggleProjectSelection(); document.getElementById('modalUser').style.display = 'flex';
         }
 
@@ -810,12 +851,12 @@
         async function fetchLogs() {
             const tbody = document.getElementById('logsTableBody');
             const btn = document.getElementById('btnRefreshLogs'); btn.innerText = "กำลังรีเฟรช..."; btn.disabled = true;
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">กำลังดึงข้อมูล...</td></tr>';
             try {
                 const result = await safeFetch(`${API_URL}?action=getLogs`);
                 if (result.status === 'success') {
                     let allowedLogs = result.data;
-                    if (allowedLogs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:var(--text-muted);">ยังไม่มีประวัติการทำงาน</td></tr>'; return; }
+                    if (allowedLogs.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color:var(--text-muted);">ยังไม่มีประวัติการทำงาน</td></tr>'; return; }
                     tbody.innerHTML = '';
                     allowedLogs.forEach(log => {
                         const tr = document.createElement('tr');
@@ -828,8 +869,8 @@
                             <td style="color:var(--text-muted);">${log.detail}</td>`;
                         tbody.appendChild(tr);
                     });
-                } else { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">${result.message}</td></tr>`; }
-            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color:red;">เชื่อมต่อล้มเหลว</td></tr>'; }
+                } else { tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color:var(--danger);">${result.message}</td></tr>`; }
+            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color:var(--danger);">เชื่อมต่อล้มเหลว</td></tr>'; }
             finally { btn.innerText = "🔄 รีเฟรชข้อมูล"; btn.disabled = false; }
         }
     </script>
