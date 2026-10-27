@@ -4,27 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แบบประเมินความพึงพอใจ</title>
-    <!-- 🚀 เรียกใช้ฟอนต์ LINE Seed Sans TH และ Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/LineSeedSansTH/LineSeedSansTH.css" rel="stylesheet" />
     <style>
-        /* 🚀 บังคับใช้ฟอนต์ใหม่ทั้งหมด */
         body { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; text-align: center; background-color: #f0f4f8; padding: 20px; color: #333; margin: 0; }
         input, textarea, button, select { font-family: inherit; }
         
         .survey-box { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); max-width: 450px; margin: 40px auto; display: none; }
         .error-box { background: #fff; padding: 40px; border-radius: 16px; max-width: 400px; margin: 60px auto; color: #dc3545; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         h2 { color: #2c3e50; font-size: 24px; margin-bottom: 5px; }
-        .zone-name { color: #007bff; font-weight: 600; font-size: 18px; margin-bottom: 25px; }
+        .zone-name { color: #2563eb; font-weight: 600; font-size: 18px; margin-bottom: 25px; }
         .emojis { display: flex; justify-content: space-around; margin-bottom: 30px; background: #f8f9fa; border-radius: 12px; padding: 15px 5px; }
         .emoji-btn { font-size: 45px; cursor: pointer; opacity: 0.3; transition: all 0.3s ease; border: none; background: none; padding: 0; filter: grayscale(100%); }
         .emoji-btn:hover { transform: scale(1.15); opacity: 0.7; }
         .emoji-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
         textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 25px; resize: none; box-sizing: border-box; font-size: 15px; }
-        textarea:focus { outline: none; border-color: #007bff; }
-        .submit-btn { background: #007bff; color: white; border: none; padding: 15px 20px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .submit-btn:hover { background: #0056b3; }
-        .loader { display: none; margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        textarea:focus { outline: none; border-color: #2563eb; }
+        .submit-btn { background: #2563eb; color: white; border: none; padding: 15px 20px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .submit-btn:hover { background: #1d4ed8; }
+        .loader { display: none; margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #2563eb; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -48,7 +46,7 @@
     </div>
 
     <script>
-        // 👇👇 เปลี่ยนเป็น Web App URL ของคุณ 👇👇
+        // ⚠️ ใส่ Web App URL ของคุณที่นี่
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         
         let selectedRating = 0;
