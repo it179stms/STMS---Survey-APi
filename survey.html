@@ -2,51 +2,186 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>แบบประเมินความพึงพอใจ</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/lazywasabi/thai-web-fonts@7/fonts/LineSeedSansTH/LineSeedSansTH.css" rel="stylesheet" />
+    
     <style>
-        body { font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; text-align: center; background-color: #f0f4f8; padding: 20px; color: #333; margin: 0; }
+        body { 
+            font-family: 'LINE Seed Sans TH', 'Prompt', sans-serif; 
+            text-align: center; 
+            /* 🌸 พื้นหลังไล่สีพาสเทลน่ารักๆ */
+            background: linear-gradient(135deg, #ffe0f0 0%, #fff5e1 100%); 
+            min-height: 100vh;
+            margin: 0; 
+            padding: 20px; 
+            color: #594a4e; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
         input, textarea, button, select { font-family: inherit; }
         
-        .survey-box { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); max-width: 450px; margin: 40px auto; display: none; }
-        .error-box { background: #fff; padding: 40px; border-radius: 16px; max-width: 400px; margin: 60px auto; color: #dc3545; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h2 { color: #2c3e50; font-size: 24px; margin-bottom: 5px; }
-        .zone-name { color: #2563eb; font-weight: 600; font-size: 18px; margin-bottom: 25px; }
-        .emojis { display: flex; justify-content: space-around; margin-bottom: 30px; background: #f8f9fa; border-radius: 12px; padding: 15px 5px; }
-        .emoji-btn { font-size: 45px; cursor: pointer; opacity: 0.3; transition: all 0.3s ease; border: none; background: none; padding: 0; filter: grayscale(100%); }
-        .emoji-btn:hover { transform: scale(1.15); opacity: 0.7; }
-        .emoji-btn.active { opacity: 1; transform: scale(1.2); filter: grayscale(0%); }
-        textarea { width: 100%; height: 100px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 25px; resize: none; box-sizing: border-box; font-size: 15px; }
-        textarea:focus { outline: none; border-color: #2563eb; }
-        .submit-btn { background: #2563eb; color: white; border: none; padding: 15px 20px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .submit-btn:hover { background: #1d4ed8; }
-        .loader { display: none; margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #2563eb; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        /* 📦 กล่องประเมินโค้งมน ขอบนุ่มนวล */
+        .survey-box, .error-box { 
+            background: #ffffff; 
+            padding: 40px 25px; 
+            border-radius: 32px; 
+            box-shadow: 0 15px 35px rgba(255, 168, 187, 0.3); 
+            max-width: 450px; 
+            width: 100%;
+            display: none; 
+            border: 3px solid #fff0f5;
+            box-sizing: border-box;
+        }
+        
+        h2 { 
+            color: #ff6b81; 
+            font-size: 26px; 
+            margin-top: 0;
+            margin-bottom: 12px; 
+            text-shadow: 1px 1px 0px #ffe5e5;
+        }
+        
+        /* 📍 ป้ายชื่อโซนแบบกลมๆ น่ารัก */
+        .zone-name { 
+            background: #e0f2fe; 
+            color: #0284c7; 
+            font-weight: 600; 
+            font-size: 16px; 
+            margin-bottom: 25px; 
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            border: 2px dashed #bae6fd;
+        }
+        
+        /* ✨ กล่องอีโมจิ */
+        .emojis { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 25px; 
+            background: #fff0f5; 
+            border-radius: 24px; 
+            padding: 20px 10px; 
+            border: 2px dashed #ffb6c1; 
+        }
+        
+        .emoji-btn { 
+            font-size: 42px; 
+            cursor: pointer; 
+            opacity: 0.5; 
+            /* เอฟเฟกต์เด้งดึ๋งเวลาเอาเมาส์ชี้ */
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
+            border: none; 
+            background: none; 
+            padding: 0; 
+            filter: grayscale(80%); 
+        }
+        .emoji-btn:hover { transform: scale(1.2) rotate(-5deg); opacity: 0.8; }
+        .emoji-btn.active { 
+            opacity: 1; 
+            transform: scale(1.35) rotate(0deg); 
+            filter: grayscale(0%); 
+            text-shadow: 0 10px 15px rgba(0,0,0,0.15); 
+        }
+        
+        /* 📝 กล่องข้อความ */
+        textarea { 
+            width: 100%; 
+            height: 100px; 
+            padding: 15px; 
+            border: 2px solid #f8a5c2; 
+            border-radius: 20px; 
+            margin-bottom: 25px; 
+            resize: none; 
+            box-sizing: border-box; 
+            font-size: 15px; 
+            background: #fffafa;
+            color: #594a4e;
+            transition: all 0.2s;
+        }
+        textarea:focus { 
+            outline: none; 
+            border-color: #ff6b81; 
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(255, 107, 129, 0.15);
+        }
+        
+        /* 🚀 ปุ่มกดยืนยัน */
+        .submit-btn { 
+            background: linear-gradient(135deg, #ff7979 0%, #ffbad2 100%); 
+            color: white; 
+            border: none; 
+            padding: 16px 20px; 
+            width: 100%; 
+            border-radius: 50px; 
+            font-size: 18px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
+            box-shadow: 0 8px 20px rgba(255, 121, 121, 0.3);
+        }
+        .submit-btn:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(255, 121, 121, 0.4);
+        }
+        .submit-btn:active { transform: translateY(1px); }
+        
+        /* ⏳ โหลดดิ่ง */
+        .loader { 
+            display: none; 
+            margin: 20px auto; 
+            border: 4px solid #fff0f5; 
+            border-top: 4px solid #ff6b81; 
+            border-radius: 50%; 
+            width: 35px; 
+            height: 35px; 
+            animation: spin 1s linear infinite; 
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 🌷 ข้อความสำเร็จ */
+        .success-msg h2 { color: #10b981; font-size: 28px; text-shadow: none; margin-bottom: 10px;}
+        .success-msg p { font-size: 16px; color: #6b7280; margin: 0; line-height: 1.6;}
+        .success-icon { font-size: 65px; margin-bottom: 10px; animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55); display: inline-block; }
+        @keyframes bounceIn { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
+    <!-- 🥺 หน้าต่าง Error กรณี QR Code ผิดพลาด -->
     <div class="error-box" id="errorView">
-        <h2 style="color: #dc3545; margin-bottom: 10px;">⚠️ ไม่พบข้อมูลพื้นที่</h2>
-        <p style="color: #666; font-size: 16px;">กรุณาสแกน QR Code จากป้ายประกาศ<br>ณ จุดให้บริการ เพื่อทำแบบประเมินครับ</p>
+        <div style="font-size: 65px; margin-bottom: 10px; animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);">🥺</div>
+        <h2 style="color: #ff6b81; margin-bottom: 10px;">แง... ไม่พบข้อมูลพื้นที่</h2>
+        <p style="color: #666; font-size: 16px; line-height: 1.6;">กรุณาสแกน QR Code จากป้ายประกาศ<br>ณ จุดให้บริการ เพื่อทำแบบประเมินนะคะ</p>
     </div>
 
+    <!-- 💖 หน้าต่างแบบประเมิน -->
     <div class="survey-box" id="surveyView">
         <h2>ความพึงพอใจการดูแลพื้นที่</h2>
         <div class="zone-name" id="zoneDisplay">กำลังโหลดข้อมูล...</div>
-        <p style="margin-bottom: 15px; font-size: 16px;">กรุณาเลือกระดับความพึงพอใจ</p>
+        <p style="margin-bottom: 15px; font-size: 16px; font-weight: 500;">เลือกระดับความพึงพอใจให้เราหน่อยน้า ✨</p>
+        
         <div class="emojis">
-            <button class="emoji-btn" data-value="5">😍</button><button class="emoji-btn" data-value="4">😊</button><button class="emoji-btn" data-value="3">😐</button><button class="emoji-btn" data-value="2">🙁</button><button class="emoji-btn" data-value="1">😫</button>
+            <button class="emoji-btn" data-value="5" title="ดีมาก">😍</button>
+            <button class="emoji-btn" data-value="4" title="ดี">😊</button>
+            <button class="emoji-btn" data-value="3" title="ปานกลาง">😐</button>
+            <button class="emoji-btn" data-value="2" title="พอใช้">🙁</button>
+            <button class="emoji-btn" data-value="1" title="ต้องปรับปรุง">😫</button>
         </div>
-        <textarea id="feedback" placeholder="ข้อเสนอแนะเพิ่มเติม (ถ้ามี)"></textarea>
+        
+        <textarea id="feedback" placeholder="มีข้อเสนอแนะเพิ่มเติมบอกเราได้เลยนะคะ 📝"></textarea>
+        
         <div class="loader" id="loadingSpinner"></div>
-        <button class="submit-btn" id="submitBtn" onclick="submitSurvey()">ส่งแบบประเมิน</button>
+        <button class="submit-btn" id="submitBtn" onclick="submitSurvey()">ส่งแบบประเมิน 🚀</button>
     </div>
 
     <script>
-        // ⚠️ ใส่ Web App URL ของคุณที่นี่
+        // ⚠️ อย่าลืมใส่ Web App URL ของคุณที่นี่ (เอาของเก่ามาแปะได้เลยครับ)
         const API_URL = "https://script.google.com/macros/s/AKfycbxY97IKXW-zvzk3WLCN9zObtOjJvnOhU9eLpyidnDWcJHCJoguTnVwiIybzz35UcGPfZQ/exec"; 
         
         let selectedRating = 0;
@@ -75,10 +210,14 @@
                     document.getElementById('zoneDisplay').innerText = "📍 รหัสพื้นที่ใน QR Code ไม่ถูกต้อง";
                     document.getElementById('submitBtn').disabled = true;
                     document.getElementById('submitBtn').style.background = "#ccc";
+                    document.getElementById('submitBtn').style.boxShadow = "none";
                 }
-            } catch (error) { document.getElementById('zoneDisplay').innerText = `📍 โซนรหัส: ${zoneId}`; }
+            } catch (error) { 
+                document.getElementById('zoneDisplay').innerText = `📍 โซนรหัส: ${zoneId}`; 
+            }
         }
 
+        // จัดการการเลือกอีโมจิ
         const emojiBtns = document.querySelectorAll('.emoji-btn');
         emojiBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -89,18 +228,34 @@
         });
 
         async function submitSurvey() {
-            if (selectedRating === 0) return alert("กรุณาเลือกระดับความพึงพอใจก่อนครับ");
+            if (selectedRating === 0) {
+                alert("อย่าลืมกดเลือกระดับความพึงพอใจก่อนน้า 🥺");
+                return;
+            }
 
             document.getElementById('submitBtn').style.display = 'none';
             document.getElementById('loadingSpinner').style.display = 'block';
 
-            const payload = { action: 'submitSurvey', zone_id: currentZoneId, rating: selectedRating, feedback: document.getElementById('feedback').value };
+            const payload = { 
+                action: 'submitSurvey', 
+                zone_id: currentZoneId, 
+                rating: selectedRating, 
+                feedback: document.getElementById('feedback').value 
+            };
 
             try {
                 const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                document.getElementById('surveyView').innerHTML = `<h2 style="color: #28a745; margin-top:20px;">✅ สำเร็จ!</h2><p>ขอบคุณที่ร่วมประเมิน เพื่อนำไปปรับปรุงบริการครับ</p>`;
+                
+                // 💖 เปลี่ยนหน้าตาเป็นสถานะสำเร็จ
+                document.getElementById('surveyView').innerHTML = `
+                    <div class="success-msg">
+                        <div class="success-icon">💖</div>
+                        <h2>เย้! ส่งข้อมูลสำเร็จ</h2>
+                        <p>ขอบคุณที่ร่วมประเมิน<br>เพื่อนำไปปรับปรุงบริการนะคะ ✨</p>
+                    </div>
+                `;
             } catch (error) {
-                alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+                alert("แง... เกิดข้อผิดพลาดในการส่งข้อมูล ลองใหม่อีกครั้งนะคะ");
                 document.getElementById('submitBtn').style.display = 'block';
                 document.getElementById('loadingSpinner').style.display = 'none';
             }
